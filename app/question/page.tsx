@@ -69,6 +69,34 @@ export default function QuestionPage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&display=swap');
+
+        @media (max-width: 768px) {
+          /* Hide the simulation serial on mobile */
+          .q-serial { display: none !important; }
+          /* Center content fills full width (sidebar overlaps, content clears it) */
+          .q-center { left: 0 !important; padding: 0 20px !important; gap: 40px !important; }
+          /* Question text: smaller, centered, wider container, max 2 lines, no mid-word break */
+          .q-textwrap { width: 90% !important; max-width: 90% !important; }
+          .q-heading {
+            font-size: clamp(1.4rem, 6vw, 2rem) !important;
+            max-width: 100% !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+          .q-subtitle {
+            font-size: clamp(0.95rem, 3.5vw, 1.1rem) !important;
+            max-width: 100% !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          /* Button container wider on mobile */
+          .q-btnwrap { width: 90% !important; }
+          .q-btnwrap button { width: 100% !important; padding: 16px 0 !important; }
+        }
       `}</style>
 
       <div style={{ position: "fixed", inset: 0, overflow: "hidden", background: "#0d0a08" }}>
@@ -118,7 +146,7 @@ export default function QuestionPage() {
           <AppHeader step="STEP 02 / BEFORE WE BEGIN" />
 
           {/* BOTTOM RIGHT SERIAL */}
-          <div style={{
+          <div className="q-serial" style={{
             position: "fixed", bottom: 20, right: 28,
             fontSize: 12, letterSpacing: "0.16em",
             color: "rgba(255,255,255,0.3)", zIndex: 10,
@@ -127,15 +155,15 @@ export default function QuestionPage() {
           </div>
 
           {/* CENTER CONTENT */}
-          <div style={{
+          <div className="q-center" style={{
             position: "absolute", top: 0, bottom: 0, left: 80, right: 0,
             display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
             gap: 56, zIndex: 5,
             padding: "0 60px",
           }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-              <h1 style={{
+            <div className="q-textwrap" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+              <h1 className="q-heading" style={{
                 fontFamily: "'Amiri', serif",
                 fontSize: "clamp(2.2rem, 4vw, 3.4rem)",
                 color: "#FFC99D",
@@ -148,7 +176,7 @@ export default function QuestionPage() {
                 {capitalizeFirst(name)}, what if the world around you felt different than it does today?
               </h1>
 
-              <p style={{
+              <p className="q-subtitle" style={{
                 fontFamily: "var(--font-assistant), 'assistant', sans-serif",
                 fontStyle: "normal",
                 fontSize: "clamp(1.1rem, 2vw, 1.6rem)",
@@ -162,7 +190,7 @@ export default function QuestionPage() {
               </p>
             </div>
 
-            <div style={{ display: "flex" }}>
+            <div className="q-btnwrap" style={{ display: "flex", justifyContent: "center" }}>
               <button
                 type="button"
                 onClick={() => answer("yes")}

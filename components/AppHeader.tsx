@@ -20,6 +20,7 @@ export default function AppHeader({
   const navigate = useNavigate();
   return (
     <div
+      className="aura-header"
       style={{
         position,
         top: 0,
@@ -34,8 +35,18 @@ export default function AppHeader({
         lineHeight: 1,
       }}
     >
+      {/* Mobile: hide the right (Simulation | Exit) block, push step label to the right */}
+      <style>{`
+        @media (max-width: 768px) {
+          .aura-header { left: 0 !important; padding: 0 20px !important; justify-content: flex-end !important; }
+          .aura-header-right { display: none !important; }
+          .aura-header-step { text-align: right; }
+        }
+      `}</style>
+
       {/* LEFT: step label */}
       <div
+        className="aura-header-step"
         style={{
           display: "flex",
           alignItems: "center",
@@ -51,7 +62,7 @@ export default function AppHeader({
       </div>
 
       {/* RIGHT: optional bank button + exit */}
-      <div style={{ display: "flex", alignItems: "center", gap: 20, lineHeight: 1 }}>
+      <div className="aura-header-right" style={{ display: "flex", alignItems: "center", gap: 20, lineHeight: 1 }}>
         {showBank && (
           <button
             type="button"
