@@ -22,7 +22,7 @@ export default async function ExplorePage() {
 
       <AppSidebar />
 
-      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center px-6 py-16 pl-20 sm:pl-24">
+      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center px-6 py-16 sm:pl-24">
         <div className="aura-rise w-full max-w-xl">
           <h1 className="mb-3 text-center font-serif text-4xl font-normal text-[#ffc99d] sm:text-5xl">
             Choose a Simulation
