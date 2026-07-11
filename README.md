@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# aura-explore
 
-## Getting Started
+A standalone site for viewing pre-made autism simulations. Unlike the main AURA
+simulator, aura-explore has no chat and no AI generation — it reads a library of
+simulations from Supabase and lets people browse and watch them.
 
-First, run the development server:
+## Screens
+
+- **`/`** — Landing. AURA wordmark, tagline, and an **Enter** button.
+- **`/explore`** — Grid of simulation cards (2 columns on mobile, 3 on desktop),
+  each showing the situation and a sensory-load bar. Click to open.
+- **`/simulation/[id]`** — The viewer. Mobile-first portrait layout with a fixed
+  metrics top bar, a vignetted looping video, and a draggable/collapsible bottom
+  sheet of thoughts and context. On desktop it becomes a three-column layout
+  (context panels left/right, video center).
+
+## Environment variables
+
+Create a `.env.local` file in the project root (already git-ignored):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Both are required — the app reads them in `lib/supabase.ts` to create the
+Supabase client. When deploying (e.g. to Vercel), set the same two variables in
+the project's environment settings.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Data
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Rows come from the Supabase `simulations` table with these fields:
 
-## Learn More
+| field                 | notes                                                        |
+| --------------------- | ------------------------------------------------------------ |
+| `id`                  | primary key, used in the `/simulation/[id]` route            |
+| `situation`           | short description shown on cards and in the viewer           |
+| `video_url`           | looping, muted, autoplaying background video                 |
+| `internal_thoughts`   | ` \| `-separated thoughts; trailing `[tags]` become chips     |
+| `sensory_load`        | single integer; drives the sensory bar and top-bar metrics  |
+| `emotional_landscape` | optional prose section (hidden when empty)                   |
+| `soundscape`          | optional prose section (hidden when empty)                   |
+| `objective`           | optional prose section (hidden when empty)                   |
+| `visual_effect`       | reserved for future visual treatments                        |
 
-To learn more about Next.js, take a look at the following resources:
+## Getting started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000).
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build   # production build
+```
