@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "./TransitionProvider";
 import AppHeader from "@/components/AppHeader";
-import AppSidebar from "@/components/AppSidebar";
+import CornerIcons from "@/components/CornerIcons";
 
 type Screen = "idle" | "landing" | "intro";
 
@@ -273,8 +273,8 @@ export default function LandingPage() {
             {/* Dark overlay */}
             <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 1 }} />
 
-            {/* Left sidebar */}
-            <AppSidebar />
+            {/* Corner icons (eye top-left, bank bottom-left) */}
+            <CornerIcons />
 
             {/* Top header */}
             <AppHeader step="STEP 00 / INTRODUCTION" position="absolute" />

@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "../TransitionProvider";
-import AppSidebar from "@/components/AppSidebar";
+import CornerIcons from "@/components/CornerIcons";
 import AppHeader from "@/components/AppHeader";
-
-function capitalizeFirst(str: string) {
-  if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
 
 export default function QuestionPage() {
   const navigate = useNavigate();
-  const [name, setName] = useState("Friend");
   const [transitioning, setTransitioning] = useState(false);
 
   // ui opacity: 1 = visible, 0 = faded out
@@ -21,18 +15,6 @@ export default function QuestionPage() {
   const [overlayOpacity, setOverlayOpacity] = useState(0.45);
   // video blur: 24 = blurred, 0 = clear
   const [videoBlur, setVideoBlur] = useState(24);
-
-  useEffect(() => {
-    // Read the visitor's saved name (if any) once on mount. Deferred to a
-    // microtask so the setState doesn't run synchronously inside the effect
-    // (react-hooks/set-state-in-effect); behavior is otherwise identical.
-    Promise.resolve().then(() => {
-      try {
-        const profile = JSON.parse(localStorage.getItem("aura.profile.v1") || "{}");
-        if (profile.name) setName(profile.name.trim().split(" ")[0]);
-      } catch {}
-    });
-  }, []);
 
   function answer(value: "yes" | "no") {
     if (transitioning) return;
@@ -139,8 +121,8 @@ export default function QuestionPage() {
           pointerEvents: transitioning ? "none" : "auto",
         }}>
 
-          {/* LEFT SIDEBAR */}
-          <AppSidebar />
+          {/* CORNER ICONS (eye top-left, bank bottom-left) */}
+          <CornerIcons />
 
           {/* TOP HEADER */}
           <AppHeader step="STEP 02 / BEFORE WE BEGIN" />
@@ -173,7 +155,7 @@ export default function QuestionPage() {
                 margin: 0,
                 maxWidth: 820,
               }}>
-                {capitalizeFirst(name)}, what if the world around you felt different than it does today?
+                What if the world around you felt different than it does?
               </h1>
 
               <p className="q-subtitle" style={{
