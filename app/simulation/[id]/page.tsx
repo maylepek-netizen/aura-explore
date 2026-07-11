@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getSimulation } from "@/lib/supabase";
+import { getSimulationById } from "@/lib/supabase";
 import SimulationViewer from "./SimulationViewer";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export default async function SimulationPage({
     notFound();
   }
 
-  const sim = await getSimulation(numericId);
+  const sim = await getSimulationById(numericId);
   if (!sim) {
     notFound();
   }
