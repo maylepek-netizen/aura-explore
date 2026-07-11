@@ -18,7 +18,7 @@ function MetricBars({
     <div className="grid grid-cols-3 gap-3">
       {metrics.map((m) => (
         <div key={m.label} className="min-w-0">
-          <div className="truncate text-[9px] font-medium uppercase tracking-[0.18em] text-[#f3ece4]/60">
+          <div className="truncate text-[9px] font-medium uppercase tracking-[0.18em] text-white/60">
             {m.label}
           </div>
           <div className="mt-1 h-[3px] w-full overflow-hidden rounded-full bg-white/12">
@@ -108,7 +108,7 @@ function VideoStage({
 
       {failed && (
         <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 px-8 text-center">
-          <p className="font-serif text-sm italic text-[#f3ece4]/45">
+          <p className="font-serif text-sm italic text-white/45">
             Video unavailable
           </p>
         </div>
@@ -148,7 +148,7 @@ function PanelContent({ sim }: { sim: Simulation }) {
         <Section label="Thoughts">
           <ul className="space-y-3">
             {thoughts.map((t, i) => (
-              <li key={i} className="font-serif text-[15px] leading-relaxed text-[#f3ece4]/85">
+              <li key={i} className="font-serif text-[15px] leading-relaxed text-white/85">
                 <span className="italic">“{t.text}”</span>
                 {t.tag && (
                   <span className="ml-2 inline-block rounded-full border border-[#bcc2ff]/30 px-2 py-0.5 align-middle text-[10px] not-italic uppercase tracking-wider text-[#bcc2ff]/80">
@@ -163,7 +163,7 @@ function PanelContent({ sim }: { sim: Simulation }) {
 
       {sim.emotional_landscape?.trim() && (
         <Section label="Emotional landscape">
-          <p className="text-sm leading-relaxed text-[#f3ece4]/75">
+          <p className="text-sm leading-relaxed text-white/75">
             {sim.emotional_landscape}
           </p>
         </Section>
@@ -171,7 +171,7 @@ function PanelContent({ sim }: { sim: Simulation }) {
 
       {sim.soundscape?.trim() && (
         <Section label="Soundscape">
-          <p className="text-sm leading-relaxed text-[#f3ece4]/75">
+          <p className="text-sm leading-relaxed text-white/75">
             {sim.soundscape}
           </p>
         </Section>
@@ -179,7 +179,7 @@ function PanelContent({ sim }: { sim: Simulation }) {
 
       {sim.objective?.trim() && (
         <Section label="Objective">
-          <p className="text-sm leading-relaxed text-[#f3ece4]/75">
+          <p className="text-sm leading-relaxed text-white/75">
             {sim.objective}
           </p>
         </Section>
@@ -192,7 +192,7 @@ function StopButton() {
   return (
     <Link
       href="/explore"
-      className="flex w-full items-center justify-center rounded-xl bg-[#ffc99d] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.2em] text-[#0a0807] transition-colors hover:bg-[#ffd8b6]"
+      className="aura-cta flex w-full items-center justify-center px-6 py-3.5 text-sm uppercase"
     >
       Stop simulation
     </Link>
@@ -266,7 +266,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
           <div className="mb-2 flex items-center justify-between">
             <Link
               href="/explore"
-              className="text-[10px] uppercase tracking-[0.3em] text-[#f3ece4]/40 transition-colors hover:text-[#ffc99d]"
+              className="text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
             >
               ← exit
             </Link>
@@ -349,7 +349,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
           <div className="flex-none px-6 pb-5 pt-6">
             <Link
               href="/explore"
-              className="mb-5 inline-block text-[10px] uppercase tracking-[0.3em] text-[#f3ece4]/40 transition-colors hover:text-[#ffc99d]"
+              className="mb-5 inline-block text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
             >
               ← exit
             </Link>
@@ -379,7 +379,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
             <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#ffc99d]/70">
               Situation
             </h3>
-            <p className="font-serif text-xl leading-snug text-[#f3ece4]">
+            <p className="font-serif text-xl leading-snug text-white">
               {sim.situation || "Untitled situation"}
             </p>
           </div>

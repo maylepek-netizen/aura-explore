@@ -12,7 +12,8 @@ const amiri = Amiri({
 
 const assistant = Assistant({
   variable: "--font-assistant",
-  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["latin", "hebrew"],
   display: "swap",
 });
 
@@ -32,8 +33,10 @@ export default function RootLayout({
       lang="en"
       className={`${amiri.variable} ${assistant.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0a0807] text-[#f3ece4] font-[family-name:var(--font-assistant)]">
-        {children}
+      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-[#ffc99d] selection:text-black">
+        <div className="page-fade" style={{ display: "contents" }}>
+          {children}
+        </div>
       </body>
     </html>
   );

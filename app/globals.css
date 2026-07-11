@@ -1,10 +1,16 @@
 @import "tailwindcss";
 
+/* Ported from the main AURA app's design system. Background kept at #0a0807
+   (aura-explore's cinematic near-black) rather than the main app's pure black.
+   Amiri + Assistant are loaded via next/font in layout.tsx (self-hosted). */
+
 :root {
   --background: #0a0807;
-  --foreground: #f3ece4;
+  --foreground: #ffffff;
+  --font-heading: var(--font-amiri), 'Amiri', serif;
+  --font-body: var(--font-assistant), 'Assistant', sans-serif;
 
-  /* AURA brand palette */
+  /* AURA brand accents */
   --aura-peach: #ffc99d;
   --aura-periwinkle: #bcc2ff;
   --aura-pink: #ffc1bb;
@@ -16,23 +22,28 @@
   --color-peach: var(--aura-peach);
   --color-periwinkle: var(--aura-periwinkle);
   --color-pink: var(--aura-pink);
-  --font-serif: var(--font-amiri);
-  --font-sans: var(--font-assistant);
+  --font-sans: var(--font-assistant), 'Assistant', sans-serif;
+  --font-serif: var(--font-amiri), 'Amiri', serif;
 }
 
-html,
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-body);
 }
 
-/* Cinematic base — subtle radial glow behind everything */
-body {
-  font-family: var(--font-assistant), system-ui, sans-serif;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
 }
 
+/* Serif utility for headings/quotes */
 .font-serif {
-  font-family: var(--font-amiri), Georgia, serif;
+  font-family: var(--font-heading);
+}
+
+/* Remap Tailwind font-mono utility to body font (IBM Plex Mono removed) */
+.font-mono {
+  font-family: var(--font-body);
 }
 
 /* Hide scrollbars inside panels while keeping scroll */
@@ -44,32 +55,111 @@ body {
   scrollbar-width: none;
 }
 
-@keyframes aura-breathe {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.06);
-  }
+/* ── Page dissolve ── */
+@keyframes auraFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-.aura-breathe {
-  animation: aura-breathe 7s ease-in-out infinite;
+.page-fade {
+  animation: auraFadeIn 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-@keyframes aura-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(4px);
-  }
+/* ── Button hover ── */
+.aura-btn {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  cursor: pointer;
+}
+.aura-btn:hover {
+  opacity: 0.82;
+  transform: scale(1.025);
 }
 
+/* Primary peach CTA — 12px radius, opacity 0.8 base, hover glow (from main app) */
+.aura-cta {
+  background: var(--aura-peach);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+  cursor: pointer;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.aura-cta:hover {
+  opacity: 1;
+  box-shadow: 0 0 16px rgba(255, 201, 157, 0.5);
+}
+
+/* ── Calming micro-animations ── */
+
+/* Slow breathing pulse — use on ambient elements */
+@keyframes auraBreathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%       { opacity: 0.85; transform: scale(1.012); }
+}
+.aura-breathe-slow {
+  animation: auraBreathe 6s ease-in-out infinite;
+}
+
+/* Very gentle float — for floating UI elements */
+@keyframes auraFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
+}
+.aura-float {
+  animation: auraFloat 7s ease-in-out infinite;
+}
+
+/* Gentle bob — for the chevron affordance */
+@keyframes auraBob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(4px); }
+}
 .aura-bob {
-  animation: aura-bob 2.4s ease-in-out infinite;
+  animation: auraBob 2.4s ease-in-out infinite;
+}
+
+/* Soft glow pulse — for icon/badge accents */
+@keyframes auraGlow {
+  0%, 100% { box-shadow: 0 0 0px rgba(255,201,157,0); }
+  50%       { box-shadow: 0 0 18px rgba(255,201,157,0.22); }
+}
+.aura-glow {
+  animation: auraGlow 5s ease-in-out infinite;
+}
+
+/* Fade-up entrance — for content that appears after page load */
+@keyframes auraRise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.aura-rise {
+  animation: auraRise 1.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.aura-rise-2 { animation: auraRise 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.25s both; }
+.aura-rise-3 { animation: auraRise 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both; }
+.aura-rise-4 { animation: auraRise 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.75s both; }
+
+/* Card fade-in — for grid entrance (from bank page) */
+@keyframes auraCardFadeIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.aura-card-fade {
+  opacity: 0;
+  animation: auraCardFadeIn 0.6s ease forwards;
+}
+
+/* Slow horizontal scan line */
+@keyframes auraScan {
+  0%   { top: -2%; }
+  100% { top: 102%; }
+}
+.aura-scan {
+  position: absolute; left: 0; right: 0; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.04), transparent);
+  animation: auraScan 10s linear infinite;
+  pointer-events: none;
 }
