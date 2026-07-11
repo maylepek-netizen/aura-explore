@@ -1,6 +1,26 @@
-import Link from "next/link";
+"use client";
+
+import { useNavigate } from "./TransitionProvider";
+
+const MUSIC_SRC =
+  "https://res.cloudinary.com/duhsqezo3/video/upload/v1781351439/background_music_lhjybz.mp3";
 
 export default function Home() {
+  const navigate = useNavigate();
+
+  function enter() {
+    // Initialize global background music on the user gesture (autoplay-safe),
+    // then let BackgroundMusic keep it going across navigations.
+    if (typeof window !== "undefined" && !window.backgroundMusic) {
+      const audio = new Audio(MUSIC_SRC);
+      audio.loop = true;
+      audio.volume = 0.35;
+      window.backgroundMusic = audio;
+      audio.play().catch(() => {});
+    }
+    navigate("/explore");
+  }
+
   return (
     <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 text-center">
       {/* Ambient cinematic glow — breathing */}
@@ -12,7 +32,7 @@ export default function Home() {
             "radial-gradient(circle, rgba(255,201,157,0.26) 0%, rgba(188,194,255,0.13) 45%, rgba(10,8,7,0) 72%)",
         }}
       />
-      {/* Vignette — matches main app radial darkening */}
+      {/* Vignette */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
@@ -28,7 +48,21 @@ export default function Home() {
         Simulation NO. 792734-04
       </p>
 
-      <h1 className="aura-rise-2 font-serif text-6xl font-normal leading-none tracking-tight text-[#ffc99d] sm:text-8xl">
+      {/* Real AURA eye logo (masked SVG) */}
+      <div
+        className="aura-rise-2 aura-breathe-slow mb-5"
+        role="img"
+        aria-label="AURA"
+        style={{
+          width: "clamp(56px, 8vw, 88px)",
+          height: "calc(clamp(56px, 8vw, 88px) * 112 / 148)",
+          backgroundColor: "#FFC99D",
+          WebkitMask: "url('/icons/New_logo_eye.svg') no-repeat center / contain",
+          mask: "url('/icons/New_logo_eye.svg') no-repeat center / contain",
+        }}
+      />
+
+      <h1 className="aura-rise-2 font-serif text-5xl font-normal leading-none tracking-tight text-[#ffc99d] sm:text-7xl">
         AURA
       </h1>
 
@@ -36,13 +70,14 @@ export default function Home() {
         Experience autism through different eyes
       </p>
 
-      <Link
-        href="/explore"
+      <button
+        type="button"
+        onClick={enter}
         className="aura-cta aura-rise-4 mt-14 inline-flex items-center gap-3 px-12 py-4 text-[13px] uppercase"
       >
         Enter
         <span aria-hidden>→</span>
-      </Link>
+      </button>
     </main>
   );
 }

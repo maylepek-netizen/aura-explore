@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSimulations } from "@/lib/supabase";
 import { sensoryIntensity } from "@/lib/metrics";
+import AppSidebar from "@/components/AppSidebar";
 
 // Data comes from Supabase at request time.
 export const dynamic = "force-dynamic";
@@ -20,7 +21,9 @@ export default async function ExplorePage() {
         }}
       />
 
-      <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+      <AppSidebar />
+
+      <div className="mx-auto w-full max-w-6xl px-5 py-12 pl-20 sm:px-8 sm:py-16 sm:pl-24">
         <header className="aura-rise mb-10 sm:mb-14">
           <Link
             href="/"

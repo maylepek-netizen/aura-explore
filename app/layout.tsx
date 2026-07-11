@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Amiri, Assistant } from "next/font/google";
 import "./globals.css";
+import { TransitionProvider } from "./TransitionProvider";
+import { BackgroundMusic } from "./BackgroundMusic";
 
 const amiri = Amiri({
   variable: "--font-amiri",
@@ -34,9 +36,12 @@ export default function RootLayout({
       className={`${amiri.variable} ${assistant.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-[#ffc99d] selection:text-black">
-        <div className="page-fade" style={{ display: "contents" }}>
-          {children}
-        </div>
+        <TransitionProvider>
+          <BackgroundMusic />
+          <div className="page-fade" style={{ display: "contents" }}>
+            {children}
+          </div>
+        </TransitionProvider>
       </body>
     </html>
   );
