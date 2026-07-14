@@ -30,6 +30,7 @@ export async function getSimulations(): Promise<Simulation[]> {
   const { data, error } = await supabase
     .from('simulations')
     .select('*')
+    .filter('video_url', 'like', 'https://res.cloudinary.com%')
     .order('id', { ascending: false })
   if (error) return []
   return (data as Simulation[]) || []

@@ -4,10 +4,87 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Simulation } from "@/lib/supabase";
 import { deriveMetrics, parseThoughts } from "@/lib/metrics";
+import { useNavigate } from "@/app/TransitionProvider";
 
 // Panel open height as a fraction of viewport (mobile). Collapsed = strip only.
 const OPEN_FRACTION = 0.45;
 const COLLAPSED_PX = 48;
+
+// Pulsing eye loading screen — a brief visual transition before the sim reveals.
+function LoadingScreen({ visible }: { visible: boolean }) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0a0807]"
+      style={{
+        opacity: visible ? 1 : 0,
+        transition: "opacity 0.8s ease",
+        pointerEvents: visible ? "auto" : "none",
+      }}
+    >
+      <img
+        src="/icons/New_logo_eye.svg"
+        alt=""
+        className="aura-eye-pulse"
+        style={{ width: "clamp(60px, 12vw, 80px)", opacity: 0.9 }}
+      />
+      <style>{`
+        @keyframes aura-eye-pulse-kf { 0%,100%{opacity:0.55;transform:scale(0.94)} 50%{opacity:1;transform:scale(1.06)} }
+        .aura-eye-pulse { animation: aura-eye-pulse-kf 1.6s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
+}
+
+// Reflection screen shown after the viewer stops the simulation.
+function ReflectionScreen({
+  onBank,
+  onNew,
+}: {
+  onBank: () => void;
+  onNew: () => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 30);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-10 bg-[#0a0807] px-6"
+      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.9s ease" }}
+    >
+      <img
+        src="/icons/New_logo_eye.svg"
+        alt=""
+        className="aura-eye-pulse"
+        style={{ width: 64, opacity: 0.85 }}
+      />
+      <h1 className="text-center font-serif text-3xl font-normal text-white/90 sm:text-4xl">
+        How did that feel?
+      </h1>
+      <div className="flex w-full max-w-[300px] flex-col gap-3">
+        <button
+          type="button"
+          onClick={onBank}
+          className="h-[50px] w-full rounded-lg border border-[#ffc99d]/50 bg-[#ffc99d]/[0.06] text-sm uppercase tracking-[0.14em] text-[#ffc99d] transition-colors hover:bg-[#ffc99d]/10"
+        >
+          Simulation Bank
+        </button>
+        <button
+          type="button"
+          onClick={onNew}
+          className="h-[50px] w-full rounded-lg border border-white/20 bg-white/[0.04] text-sm uppercase tracking-[0.14em] text-white/80 transition-colors hover:bg-white/[0.08]"
+        >
+          New Simulation
+        </button>
+      </div>
+      <style>{`
+        @keyframes aura-eye-pulse-kf { 0%,100%{opacity:0.55;transform:scale(0.94)} 50%{opacity:1;transform:scale(1.06)} }
+        .aura-eye-pulse { animation: aura-eye-pulse-kf 3s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
+}
 
 function MetricBars({
   metrics,
@@ -72,7 +149,6 @@ function VideoStage({
           src={sim.video_url}
           autoPlay
           loop
-          muted
           playsInline
           onError={() => setFailed(true)}
           className="h-full w-full object-cover"
@@ -148,7 +224,7 @@ function PanelContent({ sim }: { sim: Simulation }) {
         <Section label="Thoughts">
           <ul className="space-y-3">
             {thoughts.map((t, i) => (
-              <li key={i} className="font-serif text-[15px] leading-relaxed text-white/85">
+              <li key={i} className="text-[15px] leading-relaxed text-white/85">
                 <span className="italic">“{t.text}”</span>
                 {t.tag && (
                   <span className="ml-2 inline-block rounded-full border border-[#bcc2ff]/30 px-2 py-0.5 align-middle text-[10px] not-italic uppercase tracking-wider text-[#bcc2ff]/80">
@@ -188,19 +264,32 @@ function PanelContent({ sim }: { sim: Simulation }) {
   );
 }
 
-function StopButton() {
+function StopButton({ onStop }: { onStop: () => void }) {
   return (
-    <Link
-      href="/explore"
+    <button
+      type="button"
+      onClick={onStop}
       className="aura-cta flex w-full items-center justify-center px-6 py-3.5 text-sm uppercase"
     >
       Stop simulation
-    </Link>
+    </button>
   );
 }
 
 export default function SimulationViewer({ sim }: { sim: Simulation }) {
   const metrics = deriveMetrics(sim.sensory_load);
+  const navigate = useNavigate();
+
+  // Brief pulsing-eye loading transition before the simulation reveals.
+  const [loadingScreen, setLoadingScreen] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setLoadingScreen(false), 1400);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Reflection screen shown after Stop simulation.
+  const [reflecting, setReflecting] = useState(false);
+  const stopSimulation = useCallback(() => setReflecting(true), []);
 
   // ---- Mobile bottom-sheet state ----
   const [open, setOpen] = useState(true);
@@ -257,8 +346,19 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
     });
   }, [baseOpenH, maxH]);
 
+  if (reflecting) {
+    return (
+      <ReflectionScreen
+        onBank={() => navigate("/explore")}
+        onNew={() => navigate("/question")}
+      />
+    );
+  }
+
   return (
     <>
+      <LoadingScreen visible={loadingScreen} />
+
       {/* ================= MOBILE / PORTRAIT (default) ================= */}
       <div className="fixed inset-0 flex flex-col lg:hidden">
         {/* TOP BAR */}
@@ -270,9 +370,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
             >
               ← exit
             </Link>
-            <span className="font-serif text-xs italic text-[#ffc99d]/60">
-              aura
-            </span>
+            <img src="/icons/New_logo_eye.svg" alt="aura" className="w-6 opacity-70" />
           </div>
           <MetricBars metrics={metrics} />
         </div>
@@ -335,7 +433,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
           {open && (
             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0d0a09] via-[#0d0a09]/95 to-transparent px-5 pb-5 pt-8">
               <div className="pointer-events-auto">
-                <StopButton />
+                <StopButton onStop={stopSimulation} />
               </div>
             </div>
           )}
@@ -365,7 +463,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
           <VideoStage sim={sim} showChevron={false} chevronOpen />
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-center px-10 pb-8">
             <div className="w-full max-w-xs">
-              <StopButton />
+              <StopButton onStop={stopSimulation} />
             </div>
           </div>
         </div>
@@ -373,7 +471,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
         {/* RIGHT panel: situation framing */}
         <aside className="flex min-h-0 flex-col border-l border-white/10 bg-[#0d0a09]">
           <div className="px-6 pt-6">
-            <span className="font-serif text-sm italic text-[#ffc99d]/60">aura</span>
+            <img src="/icons/New_logo_eye.svg" alt="aura" className="w-7 opacity-70" />
           </div>
           <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pb-10 pt-6">
             <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#ffc99d]/70">

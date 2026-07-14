@@ -1,6 +1,7 @@
 import { getSimulations } from "@/lib/supabase";
 import CornerIcons from "@/components/CornerIcons";
 import SimulationSelect from "./SimulationSelect";
+import ExploreFooter from "./ExploreFooter";
 
 // Data comes from Supabase at request time.
 export const dynamic = "force-dynamic";
@@ -45,6 +46,8 @@ export default async function ExplorePage() {
           )}
         </div>
       </div>
+
+      <ExploreFooter />
     </main>
   );
 }
