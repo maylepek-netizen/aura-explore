@@ -164,12 +164,13 @@ function ReflectionScreen({
           <h1 style={{
             fontFamily: "'Amiri', serif",
             fontStyle: "italic",
-            fontSize: "clamp(2rem, 4vw, 3.2rem)",
+            fontSize: "1.2rem",
             color: "#FFC99D",
             margin: "0 0 8px",
             textAlign: "center",
             fontWeight: 400,
             lineHeight: 1.2,
+            whiteSpace: "nowrap",
           }}>
             Every perception tells a different story.
           </h1>
@@ -410,6 +411,39 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
     setReflecting(true);
   }, []);
 
+  // ── Mobile bottom-sheet: draggable, collapsible ──
+  // Height as a fraction of viewport. Default ~0.38 (35-40%); drag up to expand
+  // toward EXPANDED, drag down to collapse to a minimum strip.
+  const SHEET_MIN = 0.12;      // collapsed strip
+  const SHEET_DEFAULT = 0.38;  // default portion of screen
+  const SHEET_MAX = 0.85;      // fully expanded
+  const [sheetFraction, setSheetFraction] = useState(SHEET_DEFAULT);
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef<{ y: number; frac: number } | null>(null);
+
+  const onSheetPointerDown = (e: React.PointerEvent) => {
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    dragStart.current = { y: e.clientY, frac: sheetFraction };
+    setDragging(true);
+  };
+  const onSheetPointerMove = (e: React.PointerEvent) => {
+    if (!dragStart.current) return;
+    const vh = window.innerHeight || 1;
+    // Drag up (clientY decreases) → taller sheet.
+    const delta = (dragStart.current.y - e.clientY) / vh;
+    const next = Math.max(SHEET_MIN, Math.min(SHEET_MAX, dragStart.current.frac + delta));
+    setSheetFraction(next);
+  };
+  const onSheetPointerUp = () => {
+    dragStart.current = null;
+    setDragging(false);
+    // Snap to the nearest of min / default / max for a tidy resting position.
+    setSheetFraction((f) => {
+      const stops = [SHEET_MIN, SHEET_DEFAULT, SHEET_MAX];
+      return stops.reduce((best, s) => (Math.abs(s - f) < Math.abs(best - f) ? s : best), stops[0]);
+    });
+  };
+
   if (reflecting) {
     return (
       <ReflectionScreen
@@ -424,49 +458,68 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
       <LoadingScreen visible={loadingScreen} />
 
       {/* ================= MOBILE / PORTRAIT (max-width 768px) ================= */}
-      {/* Left panel only, over a black overlay: eye logo → situation → all data,
-          scrollable, Assistant sans-serif. The video sits behind, dimmed. */}
-      <div className="fixed inset-0 md:hidden">
-        {/* Background video, dimmed behind the overlay */}
-        <div className="absolute inset-0">
+      {/* Video fixed at top (~63vh, not covered by text) + a draggable, collapsible
+          bottom sheet holding all data (scrollable, Assistant sans-serif). No
+          full-screen overlay covering the video. */}
+      <div className="fixed inset-0 bg-[#0a0807] md:hidden">
+        {/* VIDEO — fixed at top, ~63% of screen height */}
+        <div className="absolute inset-x-0 top-0" style={{ height: "63vh" }}>
           <VideoStage sim={sim} />
+          {/* Top row: exit + eye logo, over the video */}
+          <div className="absolute inset-x-0 top-0 flex items-center justify-between px-6 pt-4">
+            <Link
+              href="/explore"
+              className="rounded-md bg-black/40 px-2.5 py-1 text-[10px] uppercase tracking-[0.3em] text-white/60 transition-colors hover:text-[#ffc99d]"
+            >
+              ← exit
+            </Link>
+            <img src="/icons/New_logo_eye.svg" alt="aura" className="w-7 opacity-80" />
+          </div>
         </div>
-        {/* Black opacity overlay */}
-        <div className="absolute inset-0 bg-black/70" />
 
-        {/* Scrollable single panel */}
-        <div className="no-scrollbar absolute inset-0 overflow-y-auto overscroll-contain">
-          <div className="min-h-full px-6 pb-32 pt-6">
-            {/* Top row: exit + eye logo */}
-            <div className="mb-5 flex items-center justify-between">
-              <Link
-                href="/explore"
-                className="text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
-              >
-                ← exit
-              </Link>
-              <img src="/icons/New_logo_eye.svg" alt="aura" className="w-7 opacity-80" />
-            </div>
+        {/* BOTTOM SHEET — draggable up/down, content scrollable */}
+        <div
+          className="absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl border-t border-white/10"
+          style={{
+            height: `${sheetFraction * 100}vh`,
+            background: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(8px)",
+            transition: dragging ? "none" : "height 260ms ease",
+            fontFamily: "var(--font-body)",
+          }}
+        >
+          {/* Drag handle */}
+          <div
+            onPointerDown={onSheetPointerDown}
+            onPointerMove={onSheetPointerMove}
+            onPointerUp={onSheetPointerUp}
+            onPointerCancel={onSheetPointerUp}
+            className="flex flex-none touch-none cursor-grab flex-col items-center justify-center gap-1 py-3 active:cursor-grabbing"
+          >
+            <span className="h-1 w-10 rounded-full bg-white/30" />
+          </div>
 
+          {/* Scrollable content */}
+          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-28" style={{ fontFamily: "var(--font-body)" }}>
             {/* Metrics */}
-            <div className="mb-6">
+            <div className="mb-5">
               <MetricBars metrics={metrics} />
             </div>
 
-            {/* Situation */}
-            <h2 className="mb-6 font-serif text-2xl leading-snug text-white">
+            {/* Situation — sans-serif */}
+            <h2 className="mb-5 text-xl font-semibold leading-snug text-white" style={{ fontFamily: "var(--font-body)" }}>
               {sim.situation || "Untitled situation"}
             </h2>
 
             {/* All data sections in sans-serif */}
             <DataSections sim={sim} />
           </div>
-        </div>
 
-        {/* Stop button pinned to bottom */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0a0807] via-[#0a0807]/95 to-transparent px-6 pb-6 pt-10">
-          <div className="pointer-events-auto">
-            <StopButton onStop={stopSimulation} />
+          {/* Stop button pinned to bottom of the sheet */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/95 to-transparent px-6 pb-5 pt-8">
+            <div className="pointer-events-auto">
+              <StopButton onStop={stopSimulation} />
+            </div>
           </div>
         </div>
       </div>

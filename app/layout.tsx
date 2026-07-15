@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Amiri, Assistant } from "next/font/google";
 import "./globals.css";
 import { TransitionProvider } from "./TransitionProvider";
@@ -23,6 +23,12 @@ export const metadata: Metadata = {
   title: "AURA — Experience autism through different eyes",
   description:
     "AURA is an experiential viewer of pre-made autism simulations. Browse and watch situations rendered through a neurodivergent lens.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
