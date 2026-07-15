@@ -164,13 +164,12 @@ function ReflectionScreen({
           <h1 style={{
             fontFamily: "'Amiri', serif",
             fontStyle: "italic",
-            fontSize: "1.2rem",
+            fontSize: "clamp(1.2rem, 4vw, 3.2rem)",
             color: "#FFC99D",
             margin: "0 0 8px",
             textAlign: "center",
             fontWeight: 400,
             lineHeight: 1.2,
-            whiteSpace: "nowrap",
           }}>
             Every perception tells a different story.
           </h1>
@@ -185,7 +184,7 @@ function ReflectionScreen({
             margin: "0 0 56px",
             maxWidth: 820,
           }}>
-            What you experienced was only one possible interpretation of the world.
+            What you experienced was only one possible<br />interpretation of the world.
           </p>
 
           <p style={{
