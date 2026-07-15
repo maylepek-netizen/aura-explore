@@ -1,28 +1,81 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "@/app/TransitionProvider";
 import { sensoryIntensity } from "@/lib/metrics";
 import type { Simulation } from "@/lib/supabase";
 
 type Card = Pick<Simulation, "id" | "situation" | "video_url" | "sensory_load">;
 
+// Random but stable positions across a virtual canvas (ported from the main
+// AURA bank). A seeded LCG keeps the scatter identical between renders.
+function getCardPositions(count: number): { x: number; y: number }[] {
+  const positions: { x: number; y: number }[] = [];
+  const rng = (seed: number) => {
+    let s = seed;
+    return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+  };
+  const rand = rng(42);
+  const cols = Math.ceil(Math.sqrt(count * 1.6));
+  const cellW = 2800 / cols;
+  const cellH = 1800 / Math.ceil(count / cols || 1);
+  for (let i = 0; i < count; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    positions.push({
+      x: 100 + col * cellW + rand() * cellW * 0.5,
+      y: 100 + row * cellH + rand() * cellH * 0.5,
+    });
+  }
+  return positions;
+}
+
 function loadColor(intensity: number) {
   return intensity > 70 ? "#e05c5c" : intensity > 45 ? "#ffc99d" : "#5ce08c";
 }
 
-function SimCard({ sim, onOpen }: { sim: Card; onOpen: () => void }) {
+function SimCard({
+  sim, index, x, y, onOpen,
+}: {
+  sim: Card; index: number; x: number; y: number; onOpen: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
   const [failed, setFailed] = useState(false);
   const intensity = sensoryIntensity(sim.sensory_load);
+  const snippet = (sim.situation ?? "").length > 80 ? sim.situation!.slice(0, 80) + "…" : (sim.situation || `Untitled #${sim.id}`);
+  const num = String(index + 1).padStart(3, "0");
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="group flex snap-center flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/30 text-left transition-all duration-300 hover:border-[#ffc99d]/40 hover:bg-black/50"
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={(e) => { e.stopPropagation(); onOpen(); }}
+      style={{
+        position: "absolute",
+        left: x,
+        top: y,
+        width: 200,
+        cursor: "pointer",
+        transform: hovered ? "scale(1.06)" : "scale(1)",
+        filter: hovered ? "grayscale(0%) brightness(1.05)" : "grayscale(100%)",
+        transition: "all 0.4s ease",
+        opacity: 0,
+        animation: "cardFadeIn 0.6s ease forwards",
+        animationDelay: `${index * 0.06}s`,
+      }}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video w-full overflow-hidden bg-black">
+      <div style={{
+        width: "100%",
+        height: 120,
+        borderRadius: 8,
+        background: "rgba(255,255,255,0.06)",
+        border: `1px solid ${hovered ? "rgba(255,201,157,0.35)" : "rgba(255,255,255,0.1)"}`,
+        overflow: "hidden",
+        position: "relative",
+        boxShadow: hovered ? "0 0 24px rgba(255,201,157,0.2), 0 8px 32px rgba(0,0,0,0.5)" : "0 4px 16px rgba(0,0,0,0.4)",
+        transition: "all 0.4s ease",
+      }}>
         {sim.video_url && !failed ? (
           <video
             src={sim.video_url}
@@ -30,60 +83,98 @@ function SimCard({ sim, onOpen }: { sim: Card; onOpen: () => void }) {
             playsInline
             preload="metadata"
             onError={() => setFailed(true)}
-            className="h-full w-full object-cover opacity-80 transition-opacity duration-300 group-hover:opacity-100"
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            onLoadedMetadata={(e) => { e.currentTarget.currentTime = 0.5; }}
           />
         ) : (
-          <div
-            className="h-full w-full"
-            style={{
-              background:
-                "radial-gradient(80% 60% at 50% 40%, rgba(255,201,157,0.16) 0%, rgba(188,194,255,0.10) 45%, #050403 85%)",
-            }}
-          />
+          <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, rgba(20,15,10,0.9), rgba(10,8,6,0.95))" }} />
         )}
         {/* Load bar */}
-        <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/10">
-          <div
-            className="h-full transition-all duration-700"
-            style={{ width: `${intensity}%`, background: loadColor(intensity) }}
-          />
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.08)" }}>
+          <div style={{ height: "100%", width: `${intensity}%`, background: loadColor(intensity), transition: "width 1s ease" }} />
         </div>
+        {/* Number */}
+        <div style={{ position: "absolute", top: 10, left: 10, fontSize: 9, letterSpacing: "0.2em", color: hovered ? "rgba(255,201,157,0.8)" : "rgba(255,255,255,0.3)" }}>#{num}</div>
+        {/* Load value */}
+        <div style={{ position: "absolute", top: 10, right: 10, fontSize: 9, letterSpacing: "0.1em", color: hovered ? loadColor(intensity) : "rgba(255,255,255,0.25)" }}>{intensity}%</div>
       </div>
 
       {/* Caption */}
-      <div className="flex items-center gap-3 px-4 py-3.5">
-        <span className="flex-1 text-sm leading-snug text-white/60 transition-colors duration-200 group-hover:text-white/90">
-          {sim.situation || `Untitled situation #${sim.id}`}
-        </span>
-        <span
-          aria-hidden
-          className="text-white/20 transition-colors duration-200 group-hover:text-[#ffc99d]"
-        >
-          →
-        </span>
+      <div style={{ marginTop: 8, padding: "0 2px" }}>
+        <p style={{ fontSize: 10, lineHeight: 1.55, color: hovered ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.3)", margin: 0, transition: "color 0.4s" }}>
+          {snippet}
+        </p>
       </div>
-    </button>
+    </div>
   );
 }
 
 export default function BankGrid({ simulations }: { simulations: Card[] }) {
   const navigate = useNavigate();
+  const positions = getCardPositions(simulations.length);
+
+  // Pan state (mouse + touch). `moved` distinguishes a drag from a tap so a
+  // pan doesn't accidentally open a card.
+  const [offset, setOffset] = useState({ x: -200, y: -60 });
+  const dragging = useRef(false);
+  const moved = useRef(false);
+  const last = useRef({ x: 0, y: 0 });
+
+  const startPan = (x: number, y: number) => {
+    dragging.current = true;
+    moved.current = false;
+    last.current = { x, y };
+  };
+  const movePan = (x: number, y: number) => {
+    if (!dragging.current) return;
+    const dx = x - last.current.x;
+    const dy = y - last.current.y;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved.current = true;
+    last.current = { x, y };
+    setOffset((p) => ({ x: p.x + dx, y: p.y + dy }));
+  };
+  const endPan = () => { dragging.current = false; };
+
+  const openCard = (id: number) => { if (!moved.current) navigate(`/simulation/${id}`); };
 
   return (
-    <>
-      {/*
-        Mobile: a horizontal snap-scroll row — swipe through cards with the thumb.
-        Desktop (sm+): a normal multi-column grid.
-      */}
+    <div className="fixed inset-0" style={{ overflow: "hidden", userSelect: "none" }}>
+      <style>{`
+        @keyframes cardFadeIn { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      `}</style>
+
+      {/* Pannable canvas — mouse drag + one-finger touch pan */}
       <div
-        className="no-scrollbar -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:snap-none sm:overflow-visible sm:px-0 lg:grid-cols-3"
-        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y" }}
+        onMouseDown={(e) => { if (!(e.target as HTMLElement).closest("[data-card]")) startPan(e.clientX, e.clientY); }}
+        onMouseMove={(e) => movePan(e.clientX, e.clientY)}
+        onMouseUp={endPan}
+        onMouseLeave={endPan}
+        onTouchStart={(e) => { const t = e.touches[0]; startPan(t.clientX, t.clientY); }}
+        onTouchMove={(e) => { const t = e.touches[0]; movePan(t.clientX, t.clientY); }}
+        onTouchEnd={endPan}
+        style={{ position: "absolute", inset: 0, cursor: dragging.current ? "grabbing" : "grab", zIndex: 1, touchAction: "none" }}
       >
-        {simulations.map((sim) => (
-          <div key={sim.id} className="w-[78vw] max-w-[320px] flex-none sm:w-auto sm:max-w-none">
-            <SimCard sim={sim} onOpen={() => navigate(`/simulation/${sim.id}`)} />
-          </div>
-        ))}
+        <div style={{
+          position: "absolute",
+          width: 3000, height: 2000,
+          left: offset.x,
+          top: offset.y,
+          transition: dragging.current ? "none" : "left 0.05s, top 0.05s",
+        }}>
+          {simulations.map((sim, i) => {
+            const pos = positions[i] ?? { x: 100, y: 100 };
+            return (
+              <div key={sim.id} data-card="true">
+                <SimCard sim={sim} index={i} x={pos.x} y={pos.y} onOpen={() => openCard(sim.id)} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Hint */}
+      <div className="pointer-events-none fixed bottom-[76px] left-1/2 z-20 -translate-x-1/2 text-center text-[9px] uppercase tracking-[0.2em] text-white/20">
+        drag / swipe to explore · tap to enter
       </div>
 
       {/* Footer */}
@@ -103,6 +194,6 @@ export default function BankGrid({ simulations }: { simulations: Card[] }) {
           Read the Research →
         </button>
       </div>
-    </>
+    </div>
   );
 }

@@ -9,11 +9,11 @@ export default async function BankPage() {
   const simulations = await getSimulations();
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden">
+    <main className="fixed inset-0 overflow-hidden bg-[#0a0806]">
       {/* Radial vignette overlay */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
+        className="pointer-events-none fixed inset-0 z-[2]"
         style={{
           background:
             "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%)",
@@ -22,31 +22,30 @@ export default async function BankPage() {
 
       <CornerIcons />
 
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 pb-28 pt-[12vh]">
-        <div className="aura-rise mb-8 text-center">
-          <h1 className="mb-3 font-serif text-4xl font-normal text-[#ffc99d] sm:text-5xl">
-            Simulation Bank
-          </h1>
-          <p className="text-sm tracking-[0.02em] text-white/55">
-            The full library — tap a card to step inside.
+      {/* Top title bar */}
+      <div className="fixed inset-x-0 top-0 z-20 flex items-center gap-3 border-b border-white/[0.07] bg-black/70 px-7 py-4 backdrop-blur">
+        <img src="/icons/bank.svg" alt="" className="w-[18px] opacity-60" />
+        <span className="text-[11px] uppercase tracking-[0.2em] text-white/70">Simulation Bank</span>
+        <span className="text-[10px] tracking-[0.1em] text-white/25">{simulations.length} saved</span>
+      </div>
+
+      {simulations.length === 0 ? (
+        <div className="fixed inset-0 flex flex-col items-center justify-center gap-5 px-6 text-center">
+          <img src="/icons/bank.svg" alt="" className="w-10 opacity-25" />
+          <p className="text-[11px] uppercase tracking-[0.18em] text-white/30">
+            No simulations available right now.
           </p>
         </div>
-
-        {simulations.length === 0 ? (
-          <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-black/40 p-10 text-center text-sm uppercase tracking-[0.18em] text-white/40">
-            No simulations available right now.
-          </div>
-        ) : (
-          <BankGrid
-            simulations={simulations.map((s) => ({
-              id: s.id,
-              situation: s.situation,
-              video_url: s.video_url,
-              sensory_load: s.sensory_load,
-            }))}
-          />
-        )}
-      </div>
+      ) : (
+        <BankGrid
+          simulations={simulations.map((s) => ({
+            id: s.id,
+            situation: s.situation,
+            video_url: s.video_url,
+            sensory_load: s.sensory_load,
+          }))}
+        />
+      )}
     </main>
   );
 }

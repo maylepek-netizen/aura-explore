@@ -6,9 +6,10 @@ import type { Simulation } from "@/lib/supabase";
 import { deriveMetrics, parseThoughts, sensoryIntensity } from "@/lib/metrics";
 import { useNavigate } from "@/app/TransitionProvider";
 
-// ─── Synthesized heartbeat (Web Audio) ────────────────────────────────────────
-// A low sine "thump" (two beats — lub-dub — per cycle) whose rate scales with
-// sensory load: intensity 0 → 60 BPM, intensity 100 → 100 BPM (linear).
+// ─── Synthesized heartbeat (Web Audio) — realistic lub-dub ────────────────────
+// One cycle = "lub" (60Hz, 0.08s) → 0.05s pause → "dub" (55Hz, 0.06s) → silence
+// until the next cycle. Cycle rate scales with sensory load:
+// intensity 0 → 60 BPM, intensity 100 → 100 BPM (linear).
 class HeartbeatEngine {
   private ctx: AudioContext;
   private timeout: ReturnType<typeof setTimeout> | null = null;
@@ -18,37 +19,40 @@ class HeartbeatEngine {
     this.ctx = new AudioContext();
   }
 
-  // intensity is 0–100 (from sensoryIntensity)
   private bpmForIntensity(intensity: number) {
     const clamped = Math.max(0, Math.min(100, intensity));
     return 60 + (clamped / 100) * 40; // 60 → 100 BPM
   }
 
-  private beatPulse(when: number, gain: number) {
+  // A single low sine tone: `freq` Hz held for `dur` seconds, with tiny
+  // attack/release so it thumps rather than clicks.
+  private tone(when: number, freq: number, dur: number, gain: number) {
     const osc = this.ctx.createOscillator();
     const gainNode = this.ctx.createGain();
     const filter = this.ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = 80;
-    filter.Q.value = 8;
+    filter.frequency.value = 90;
+    filter.Q.value = 6;
     osc.type = "sine";
-    osc.frequency.setValueAtTime(55, when);
-    osc.frequency.exponentialRampToValueAtTime(30, when + 0.08);
+    osc.frequency.setValueAtTime(freq, when);
     gainNode.gain.setValueAtTime(0, when);
-    gainNode.gain.linearRampToValueAtTime(gain, when + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, when + 0.15);
+    gainNode.gain.linearRampToValueAtTime(gain, when + 0.012);
+    gainNode.gain.setValueAtTime(gain, when + dur - 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, when + dur);
     osc.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(this.ctx.destination);
     osc.start(when);
-    osc.stop(when + 0.2);
+    osc.stop(when + dur + 0.02);
   }
 
   private loop(intensity: number) {
     if (!this.running) return;
     const now = this.ctx.currentTime;
-    this.beatPulse(now, 0.9);        // "lub"
-    this.beatPulse(now + 0.12, 0.55); // "dub"
+    // "lub": 60Hz for 0.08s
+    this.tone(now, 60, 0.08, 0.9);
+    // pause 0.05s, then "dub": 55Hz for 0.06s
+    this.tone(now + 0.08 + 0.05, 55, 0.06, 0.6);
     const interval = (60 / this.bpmForIntensity(intensity)) * 1000;
     this.timeout = setTimeout(() => this.loop(intensity), interval);
   }
@@ -73,11 +77,7 @@ class HeartbeatEngine {
   }
 }
 
-// Panel open height as a fraction of viewport (mobile). Collapsed = strip only.
-const OPEN_FRACTION = 0.45;
-const COLLAPSED_PX = 48;
-
-// Pulsing eye loading screen — a brief visual transition before the sim reveals.
+// ─── Pulsing eye loading screen ───────────────────────────────────────────────
 function LoadingScreen({ visible }: { visible: boolean }) {
   return (
     <div
@@ -102,7 +102,9 @@ function LoadingScreen({ visible }: { visible: boolean }) {
   );
 }
 
-// Reflection screen shown after the viewer stops the simulation.
+// ─── Reflection screen ────────────────────────────────────────────────────────
+// Text + styling copied from the main AURA summary page. Buttons rerouted for
+// aura-explore: Simulation Bank → /bank, New Simulation → /question.
 function ReflectionScreen({
   onBank,
   onNew,
@@ -115,49 +117,141 @@ function ReflectionScreen({
     const t = setTimeout(() => setVisible(true), 30);
     return () => clearTimeout(t);
   }, []);
+
   return (
-    <div
-      className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-10 bg-[#0a0807] px-6"
-      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.9s ease" }}
-    >
-      <img
-        src="/icons/New_logo_eye.svg"
-        alt=""
-        className="aura-eye-pulse"
-        style={{ width: 64, opacity: 0.85 }}
-      />
-      <h1 className="text-center font-serif text-3xl font-normal text-white/90 sm:text-4xl">
-        How did that feel?
-      </h1>
-      <div className="flex w-full max-w-[300px] flex-col gap-3">
-        <button
-          type="button"
-          onClick={onBank}
-          className="h-[50px] w-full rounded-lg border border-[#ffc99d]/50 bg-[#ffc99d]/[0.06] text-sm uppercase tracking-[0.14em] text-[#ffc99d] transition-colors hover:bg-[#ffc99d]/10"
-        >
-          Simulation Bank
-        </button>
-        <button
-          type="button"
-          onClick={onNew}
-          className="h-[50px] w-full rounded-lg border border-white/20 bg-white/[0.04] text-sm uppercase tracking-[0.14em] text-white/80 transition-colors hover:bg-white/[0.08]"
-        >
-          New Simulation
-        </button>
-      </div>
+    <>
       <style>{`
-        @keyframes aura-eye-pulse-kf { 0%,100%{opacity:0.55;transform:scale(0.94)} 50%{opacity:1;transform:scale(1.06)} }
-        .aura-eye-pulse { animation: aura-eye-pulse-kf 3s ease-in-out infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&display=swap');
       `}</style>
-    </div>
+
+      <div
+        style={{
+          position: "fixed", inset: 0, overflow: "hidden", background: "#000",
+          zIndex: 80,
+          opacity: visible ? 1 : 0, transition: "opacity 1.5s ease-in-out",
+        }}
+      >
+        {/* Background video */}
+        <video
+          src="https://res.cloudinary.com/duhsqezo3/video/upload/v1781856804/%D7%90%D7%A0%D7%99_%D7%A8%D7%95%D7%A6%D7%94_%D7%A9%D7%96%D7%94_%D7%99%D7%94%D7%99%D7%94_%D7%AA%D7%A7%D7%A8%D7%99%D7%91%D7%99%D7%9D_%D7%A9%D7%9C_%D7%94_1_nlathf.mp4"
+          autoPlay loop muted playsInline
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%", objectFit: "cover",
+            filter: "blur(24px) brightness(0.35)",
+            transform: "scale(1.05)",
+          }}
+        />
+
+        {/* Black overlay */}
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)" }} />
+
+        {/* Radial gradient */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.85) 100%)",
+          pointerEvents: "none",
+        }} />
+
+        {/* Centered content */}
+        <div style={{
+          position: "absolute", inset: 0,
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          padding: "0 24px",
+          gap: 0,
+        }}>
+          <h1 style={{
+            fontFamily: "'Amiri', serif",
+            fontStyle: "italic",
+            fontSize: "clamp(2rem, 4vw, 3.2rem)",
+            color: "#FFC99D",
+            margin: "0 0 8px",
+            textAlign: "center",
+            fontWeight: 400,
+            lineHeight: 1.2,
+          }}>
+            Every perception tells a different story.
+          </h1>
+
+          <p style={{
+            fontFamily: "'Amiri', serif",
+            fontSize: "clamp(1.6rem, 3.2vw, 2.6rem)",
+            color: "white",
+            textAlign: "center",
+            lineHeight: 1.35,
+            fontWeight: 400,
+            margin: "0 0 56px",
+            maxWidth: 820,
+          }}>
+            What you experienced was only one possible interpretation of the world.
+          </p>
+
+          <p style={{
+            fontSize: "clamp(0.75rem, 1.2vw, 0.95rem)",
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.45)",
+            textAlign: "center",
+            margin: "0 0 64px",
+            fontWeight: 400,
+          }}>
+            Would you like to explore another perspective?
+          </p>
+
+          <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+            <button
+              type="button"
+              onClick={onBank}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.boxShadow = "0 0 16px rgba(255,201,157,0.5)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.8"; e.currentTarget.style.boxShadow = "none"; }}
+              style={{
+                background: "#FFC99D",
+                color: "#1a0f00",
+                border: "none",
+                borderRadius: 12,
+                padding: "16px 52px",
+                fontSize: 14,
+                letterSpacing: "0.06em",
+                fontWeight: 600,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                opacity: 0.8,
+                transition: "all 0.2s ease",
+              }}
+            >
+              Simulation Bank
+            </button>
+
+            <button
+              type="button"
+              className="aura-btn"
+              onClick={onNew}
+              style={{
+                background: "transparent",
+                color: "white",
+                border: "1.5px solid rgba(255,255,255,0.5)",
+                borderRadius: 50,
+                padding: "16px 52px",
+                fontSize: 14,
+                letterSpacing: "0.06em",
+                fontWeight: 400,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              New Simulation
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
-function MetricBars({
-  metrics,
-}: {
-  metrics: ReturnType<typeof deriveMetrics>;
-}) {
+// ─── Small shared pieces ──────────────────────────────────────────────────────
+
+function MetricBars({ metrics }: { metrics: ReturnType<typeof deriveMetrics> }) {
   return (
     <div className="grid grid-cols-3 gap-3">
       {metrics.map((m) => (
@@ -177,100 +271,7 @@ function MetricBars({
   );
 }
 
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`transition-transform duration-300 ${open ? "" : "rotate-180"}`}
-      aria-hidden
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function VideoStage({
-  sim,
-  showChevron,
-  onChevron,
-  chevronOpen,
-}: {
-  sim: Simulation;
-  showChevron: boolean;
-  onChevron?: () => void;
-  chevronOpen: boolean;
-}) {
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <div className="relative h-full w-full overflow-hidden bg-black">
-      {sim.video_url && !failed ? (
-        <video
-          src={sim.video_url}
-          autoPlay
-          loop
-          playsInline
-          onError={() => setFailed(true)}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        // Fallback: cinematic gradient stands in when the video can't load.
-        <div
-          className="h-full w-full"
-          style={{
-            background:
-              "radial-gradient(80% 60% at 50% 40%, rgba(255,201,157,0.16) 0%, rgba(188,194,255,0.10) 45%, #050403 85%)",
-          }}
-        />
-      )}
-
-      {/* Heavy vignette on all edges */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(110% 110% at 50% 50%, rgba(5,4,3,0) 42%, rgba(5,4,3,0.55) 72%, rgba(5,4,3,0.95) 100%)",
-        }}
-      />
-      {/* Extra top/bottom darkening for the cinematic band feel */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-24"
-        style={{
-          background: "linear-gradient(to bottom, rgba(5,4,3,0.7), rgba(5,4,3,0))",
-        }}
-      />
-
-      {failed && (
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 px-8 text-center">
-          <p className="font-serif text-sm italic text-white/45">
-            Video unavailable
-          </p>
-        </div>
-      )}
-
-      {showChevron && (
-        <button
-          type="button"
-          onClick={onChevron}
-          aria-label={chevronOpen ? "Collapse panel" : "Expand panel"}
-          className="aura-bob absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full p-2 text-[#ffc99d]/80 transition-colors hover:text-[#ffc99d]"
-        >
-          <Chevron open={chevronOpen} />
-        </button>
-      )}
-    </div>
-  );
-}
-
+// Section heading + body, in Assistant sans-serif (the body font).
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-7">
@@ -282,13 +283,13 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-function PanelContent({ sim }: { sim: Simulation }) {
+// All the data sections aura-explore has, rendered in sans-serif.
+function DataSections({ sim }: { sim: Simulation }) {
   const thoughts = parseThoughts(sim.internal_thoughts);
-
   return (
-    <div className="px-6 pb-40 pt-2">
+    <>
       {thoughts.length > 0 && (
-        <Section label="Thoughts">
+        <Section label="Internal thoughts">
           <ul className="space-y-3">
             {thoughts.map((t, i) => (
               <li key={i} className="text-[15px] leading-relaxed text-white/85">
@@ -306,28 +307,22 @@ function PanelContent({ sim }: { sim: Simulation }) {
 
       {sim.emotional_landscape?.trim() && (
         <Section label="Emotional landscape">
-          <p className="text-sm leading-relaxed text-white/75">
-            {sim.emotional_landscape}
-          </p>
+          <p className="text-sm leading-relaxed text-white/75">{sim.emotional_landscape}</p>
         </Section>
       )}
 
       {sim.soundscape?.trim() && (
         <Section label="Soundscape">
-          <p className="text-sm leading-relaxed text-white/75">
-            {sim.soundscape}
-          </p>
+          <p className="text-sm leading-relaxed text-white/75">{sim.soundscape}</p>
         </Section>
       )}
 
       {sim.objective?.trim() && (
         <Section label="Objective">
-          <p className="text-sm leading-relaxed text-white/75">
-            {sim.objective}
-          </p>
+          <p className="text-sm leading-relaxed text-white/75">{sim.objective}</p>
         </Section>
       )}
-    </div>
+    </>
   );
 }
 
@@ -343,6 +338,50 @@ function StopButton({ onStop }: { onStop: () => void }) {
   );
 }
 
+function VideoStage({ sim }: { sim: Simulation }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-black">
+      {sim.video_url && !failed ? (
+        <video
+          src={sim.video_url}
+          autoPlay
+          loop
+          playsInline
+          onError={() => setFailed(true)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div
+          className="h-full w-full"
+          style={{
+            background:
+              "radial-gradient(80% 60% at 50% 40%, rgba(255,201,157,0.16) 0%, rgba(188,194,255,0.10) 45%, #050403 85%)",
+          }}
+        />
+      )}
+
+      {/* Cinematic vignette (all edges) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(110% 110% at 50% 50%, rgba(5,4,3,0) 42%, rgba(5,4,3,0.55) 72%, rgba(5,4,3,0.95) 100%)",
+        }}
+      />
+
+      {failed && (
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 px-8 text-center">
+          <p className="font-serif text-sm italic text-white/45">Video unavailable</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main viewer ──────────────────────────────────────────────────────────────
+
 export default function SimulationViewer({ sim }: { sim: Simulation }) {
   const metrics = deriveMetrics(sim.sensory_load);
   const navigate = useNavigate();
@@ -357,7 +396,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
   // Synthesized heartbeat — starts once the sim reveals, rate scales with load.
   const heartbeatRef = useRef<HeartbeatEngine | null>(null);
   useEffect(() => {
-    if (loadingScreen) return; // wait until the loading screen clears
+    if (loadingScreen) return;
     const engine = new HeartbeatEngine();
     heartbeatRef.current = engine;
     engine.start(sensoryIntensity(sim.sensory_load));
@@ -371,65 +410,10 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
     setReflecting(true);
   }, []);
 
-  // ---- Mobile bottom-sheet state ----
-  const [open, setOpen] = useState(true);
-  // Drag offset in px added on top of the base open height (negative = taller).
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [viewportH, setViewportH] = useState(0);
-  const dragState = useRef<{ startY: number; startOffset: number } | null>(null);
-
-  useEffect(() => {
-    const update = () => setViewportH(window.innerHeight);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  const baseOpenH = viewportH ? viewportH * OPEN_FRACTION : 0;
-  const maxH = viewportH ? viewportH * 0.9 : 0;
-
-  // Effective panel height when open, factoring the current drag.
-  const openHeight = viewportH
-    ? Math.max(baseOpenH, Math.min(maxH, baseOpenH - dragOffset))
-    : baseOpenH;
-  const panelHeight = open ? openHeight : COLLAPSED_PX;
-
-  const onDragStart = useCallback(
-    (clientY: number) => {
-      if (!open) return;
-      dragState.current = { startY: clientY, startOffset: dragOffset };
-      setIsDragging(true);
-    },
-    [open, dragOffset]
-  );
-
-  const onDragMove = useCallback((clientY: number) => {
-    if (!dragState.current) return;
-    const delta = clientY - dragState.current.startY;
-    // Drag up (delta < 0) => taller panel => more negative offset.
-    setDragOffset(dragState.current.startOffset + delta);
-  }, []);
-
-  const onDragEnd = useCallback(() => {
-    dragState.current = null;
-    setIsDragging(false);
-    // If dragged down far, collapse.
-    setDragOffset((prev) => {
-      if (prev > baseOpenH * 0.4) {
-        setOpen(false);
-        return 0;
-      }
-      // Clamp within [maxH taller ... base]
-      const minOffset = -(maxH - baseOpenH);
-      return Math.max(minOffset, Math.min(0, prev));
-    });
-  }, [baseOpenH, maxH]);
-
   if (reflecting) {
     return (
       <ReflectionScreen
-        onBank={() => navigate("/explore")}
+        onBank={() => navigate("/bank")}
         onNew={() => navigate("/question")}
       />
     );
@@ -439,108 +423,78 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
     <>
       <LoadingScreen visible={loadingScreen} />
 
-      {/* ================= MOBILE / PORTRAIT (default) ================= */}
-      <div className="fixed inset-0 flex flex-col lg:hidden">
-        {/* TOP BAR */}
-        <div className="relative z-20 flex-none bg-[#0a0807]/95 px-5 pb-2.5 pt-3 backdrop-blur">
-          <div className="mb-2 flex items-center justify-between">
-            <Link
-              href="/explore"
-              className="text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
-            >
-              ← exit
-            </Link>
-            <img src="/icons/New_logo_eye.svg" alt="aura" className="w-6 opacity-70" />
+      {/* ================= MOBILE / PORTRAIT (max-width 768px) ================= */}
+      {/* Left panel only, over a black overlay: eye logo → situation → all data,
+          scrollable, Assistant sans-serif. The video sits behind, dimmed. */}
+      <div className="fixed inset-0 md:hidden">
+        {/* Background video, dimmed behind the overlay */}
+        <div className="absolute inset-0">
+          <VideoStage sim={sim} />
+        </div>
+        {/* Black opacity overlay */}
+        <div className="absolute inset-0 bg-black/70" />
+
+        {/* Scrollable single panel */}
+        <div className="no-scrollbar absolute inset-0 overflow-y-auto overscroll-contain">
+          <div className="min-h-full px-6 pb-32 pt-6">
+            {/* Top row: exit + eye logo */}
+            <div className="mb-5 flex items-center justify-between">
+              <Link
+                href="/explore"
+                className="text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
+              >
+                ← exit
+              </Link>
+              <img src="/icons/New_logo_eye.svg" alt="aura" className="w-7 opacity-80" />
+            </div>
+
+            {/* Metrics */}
+            <div className="mb-6">
+              <MetricBars metrics={metrics} />
+            </div>
+
+            {/* Situation */}
+            <h2 className="mb-6 font-serif text-2xl leading-snug text-white">
+              {sim.situation || "Untitled situation"}
+            </h2>
+
+            {/* All data sections in sans-serif */}
+            <DataSections sim={sim} />
           </div>
-          <MetricBars metrics={metrics} />
         </div>
 
-        {/* VIDEO fills remaining space above the panel */}
-        <div className="relative min-h-0 flex-1">
-          <VideoStage
-            sim={sim}
-            showChevron={open}
-            chevronOpen={open}
-            onChevron={() => {
-              setOpen(false);
-              setDragOffset(0);
-            }}
-          />
-        </div>
-
-        {/* BOTTOM SHEET */}
-        <div
-          className="absolute inset-x-0 bottom-0 z-30 flex flex-col rounded-t-2xl border-t border-white/10 bg-[#0d0a09] shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.9)]"
-          style={{
-            height: panelHeight ? `${panelHeight}px` : undefined,
-            transition: isDragging ? "none" : "height 300ms ease",
-          }}
-        >
-          {/* Drag handle / collapsed strip toggle */}
-          <button
-            type="button"
-            onClick={() => {
-              if (!open) {
-                setOpen(true);
-                setDragOffset(0);
-              }
-            }}
-            onPointerDown={(e) => {
-              if (open) {
-                (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-                onDragStart(e.clientY);
-              }
-            }}
-            onPointerMove={(e) => onDragMove(e.clientY)}
-            onPointerUp={onDragEnd}
-            onPointerCancel={onDragEnd}
-            aria-label={open ? "Drag to resize, or tap chevron to close" : "Open panel"}
-            className="flex flex-none touch-none flex-col items-center justify-center gap-1 py-2.5"
-            style={{ cursor: open ? "grab" : "pointer", height: `${COLLAPSED_PX}px` }}
-          >
-            <span className="h-1 w-10 rounded-full bg-white/25" />
-            {!open && <span className="text-[#ffc99d]/70"><Chevron open={false} /></span>}
-          </button>
-
-          {/* Scrollable content (only when open) */}
-          {open && (
-            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              <PanelContent sim={sim} />
-            </div>
-          )}
-
-          {/* STOP button fixed at very bottom of the sheet */}
-          {open && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0d0a09] via-[#0d0a09]/95 to-transparent px-5 pb-5 pt-8">
-              <div className="pointer-events-auto">
-                <StopButton onStop={stopSimulation} />
-              </div>
-            </div>
-          )}
+        {/* Stop button pinned to bottom */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0a0807] via-[#0a0807]/95 to-transparent px-6 pb-6 pt-10">
+          <div className="pointer-events-auto">
+            <StopButton onStop={stopSimulation} />
+          </div>
         </div>
       </div>
 
       {/* ================= DESKTOP (side panels + center video) ================= */}
-      <div className="fixed inset-0 hidden grid-cols-[minmax(280px,1fr)_minmax(0,2.2fr)_minmax(280px,1fr)] lg:grid">
-        {/* LEFT panel: metrics + thoughts */}
+      <div className="fixed inset-0 hidden grid-cols-[minmax(300px,1fr)_minmax(0,2.2fr)_minmax(300px,1fr)] md:grid">
+        {/* LEFT panel: metrics + all data */}
         <aside className="flex min-h-0 flex-col border-r border-white/10 bg-[#0d0a09]">
           <div className="flex-none px-6 pb-5 pt-6">
-            <Link
-              href="/explore"
-              className="mb-5 inline-block text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
-            >
-              ← exit
-            </Link>
+            <div className="mb-5 flex items-center justify-between">
+              <Link
+                href="/explore"
+                className="inline-block text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
+              >
+                ← exit
+              </Link>
+              <img src="/icons/New_logo_eye.svg" alt="aura" className="w-7 opacity-80" />
+            </div>
             <MetricBars metrics={metrics} />
           </div>
-          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
-            <PanelContent sim={sim} />
+          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pb-10 pt-2">
+            <DataSections sim={sim} />
           </div>
         </aside>
 
-        {/* CENTER: video */}
+        {/* CENTER: video + stop */}
         <div className="relative min-h-0">
-          <VideoStage sim={sim} showChevron={false} chevronOpen />
+          <VideoStage sim={sim} />
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-center px-10 pb-8">
             <div className="w-full max-w-xs">
               <StopButton onStop={stopSimulation} />
