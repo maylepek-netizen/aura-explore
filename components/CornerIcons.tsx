@@ -3,7 +3,7 @@
 import { useNavigate } from "@/app/TransitionProvider";
 
 // Two independent, fixed corner icons — NOT a sidebar column.
-// Eye (top-left) → home, Bank (bottom-left) → the simulation library.
+// Eye (top-left) → home, Bank (bottom-left) → the simulation library (/bank).
 // Same on every screen and every width; each icon is its own fixed element,
 // so nothing occupies a sidebar column or blocks clicks across the left edge.
 export default function CornerIcons() {
@@ -37,7 +37,7 @@ export default function CornerIcons() {
       <img
         src="/icons/bank.svg"
         alt="Simulation Bank"
-        onClick={() => navigate("/explore")}
+        onClick={() => navigate("/bank")}
         style={{
           position: "fixed",
           bottom: 20,

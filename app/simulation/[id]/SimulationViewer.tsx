@@ -3,8 +3,75 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Simulation } from "@/lib/supabase";
-import { deriveMetrics, parseThoughts } from "@/lib/metrics";
+import { deriveMetrics, parseThoughts, sensoryIntensity } from "@/lib/metrics";
 import { useNavigate } from "@/app/TransitionProvider";
+
+// ─── Synthesized heartbeat (Web Audio) ────────────────────────────────────────
+// A low sine "thump" (two beats — lub-dub — per cycle) whose rate scales with
+// sensory load: intensity 0 → 60 BPM, intensity 100 → 100 BPM (linear).
+class HeartbeatEngine {
+  private ctx: AudioContext;
+  private timeout: ReturnType<typeof setTimeout> | null = null;
+  private running = false;
+
+  constructor() {
+    this.ctx = new AudioContext();
+  }
+
+  // intensity is 0–100 (from sensoryIntensity)
+  private bpmForIntensity(intensity: number) {
+    const clamped = Math.max(0, Math.min(100, intensity));
+    return 60 + (clamped / 100) * 40; // 60 → 100 BPM
+  }
+
+  private beatPulse(when: number, gain: number) {
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 80;
+    filter.Q.value = 8;
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(55, when);
+    osc.frequency.exponentialRampToValueAtTime(30, when + 0.08);
+    gainNode.gain.setValueAtTime(0, when);
+    gainNode.gain.linearRampToValueAtTime(gain, when + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, when + 0.15);
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(this.ctx.destination);
+    osc.start(when);
+    osc.stop(when + 0.2);
+  }
+
+  private loop(intensity: number) {
+    if (!this.running) return;
+    const now = this.ctx.currentTime;
+    this.beatPulse(now, 0.9);        // "lub"
+    this.beatPulse(now + 0.12, 0.55); // "dub"
+    const interval = (60 / this.bpmForIntensity(intensity)) * 1000;
+    this.timeout = setTimeout(() => this.loop(intensity), interval);
+  }
+
+  start(intensity: number) {
+    if (this.running) return;
+    this.running = true;
+    if (this.ctx.state === "suspended") void this.ctx.resume();
+    this.loop(intensity);
+  }
+
+  stop() {
+    this.running = false;
+    if (this.timeout) clearTimeout(this.timeout);
+    this.timeout = null;
+    try { void this.ctx.suspend(); } catch {}
+  }
+
+  destroy() {
+    this.stop();
+    try { void this.ctx.close(); } catch {}
+  }
+}
 
 // Panel open height as a fraction of viewport (mobile). Collapsed = strip only.
 const OPEN_FRACTION = 0.45;
@@ -287,9 +354,22 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
     return () => clearTimeout(t);
   }, []);
 
+  // Synthesized heartbeat — starts once the sim reveals, rate scales with load.
+  const heartbeatRef = useRef<HeartbeatEngine | null>(null);
+  useEffect(() => {
+    if (loadingScreen) return; // wait until the loading screen clears
+    const engine = new HeartbeatEngine();
+    heartbeatRef.current = engine;
+    engine.start(sensoryIntensity(sim.sensory_load));
+    return () => { engine.destroy(); heartbeatRef.current = null; };
+  }, [loadingScreen, sim.sensory_load]);
+
   // Reflection screen shown after Stop simulation.
   const [reflecting, setReflecting] = useState(false);
-  const stopSimulation = useCallback(() => setReflecting(true), []);
+  const stopSimulation = useCallback(() => {
+    heartbeatRef.current?.stop();
+    setReflecting(true);
+  }, []);
 
   // ---- Mobile bottom-sheet state ----
   const [open, setOpen] = useState(true);
