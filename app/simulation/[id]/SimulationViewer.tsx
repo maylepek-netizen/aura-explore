@@ -283,7 +283,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
   // Brief pulsing-eye loading transition before the simulation reveals.
   const [loadingScreen, setLoadingScreen] = useState(true);
   useEffect(() => {
-    const t = setTimeout(() => setLoadingScreen(false), 1400);
+    const t = setTimeout(() => setLoadingScreen(false), 800);
     return () => clearTimeout(t);
   }, []);
 
