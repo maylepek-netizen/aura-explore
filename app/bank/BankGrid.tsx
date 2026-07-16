@@ -178,14 +178,7 @@ export default function BankGrid({ simulations }: { simulations: Card[] }) {
       </div>
 
       {/* Footer */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex items-center justify-between px-6 py-4">
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="pointer-events-auto rounded-xl border border-white/15 bg-white/[0.04] px-5 py-2.5 text-[13px] tracking-[0.04em] text-white/70 transition-colors hover:border-[#ffc99d]/40 hover:text-[#ffc99d]"
-        >
-          ← Back to Start
-        </button>
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex items-center justify-end px-6 py-4">
         <button
           type="button"
           onClick={() => navigate("/research")}

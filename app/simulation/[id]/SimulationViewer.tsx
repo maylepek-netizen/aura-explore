@@ -77,28 +77,17 @@ class HeartbeatEngine {
   }
 }
 
-// ─── Pulsing eye loading screen ───────────────────────────────────────────────
+// ─── Loading screen — plain black, no icon, no animation ──────────────────────
 function LoadingScreen({ visible }: { visible: boolean }) {
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0a0807]"
+      className="fixed inset-0 z-[60] bg-black"
       style={{
         opacity: visible ? 1 : 0,
         transition: "opacity 2.5s ease",
         pointerEvents: visible ? "auto" : "none",
       }}
-    >
-      <img
-        src="/icons/New_logo_eye.svg"
-        alt=""
-        className="aura-eye-pulse"
-        style={{ width: "clamp(60px, 12vw, 80px)", opacity: 0.9 }}
-      />
-      <style>{`
-        @keyframes aura-eye-pulse-kf { 0%,100%{opacity:0.55;transform:scale(0.94)} 50%{opacity:1;transform:scale(1.06)} }
-        .aura-eye-pulse { animation: aura-eye-pulse-kf 1.6s ease-in-out infinite; }
-      `}</style>
-    </div>
+    />
   );
 }
 
@@ -162,10 +151,10 @@ function ReflectionScreen({
           gap: 0,
         }}>
           <h1 style={{
-            fontFamily: "'Amiri', serif",
-            fontStyle: "italic",
+            fontFamily: "var(--font-body)",
             fontSize: "clamp(1.2rem, 4vw, 3.2rem)",
             color: "#FFC99D",
+            opacity: 0.6,
             margin: "0 0 8px",
             textAlign: "center",
             fontWeight: 400,
@@ -176,7 +165,7 @@ function ReflectionScreen({
 
           <p style={{
             fontFamily: "'Amiri', serif",
-            fontSize: "clamp(1.6rem, 3.2vw, 2.6rem)",
+            fontSize: "clamp(1.92rem, 3.84vw, 3.12rem)",
             color: "white",
             textAlign: "center",
             lineHeight: 1.35,
@@ -462,19 +451,23 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
           bottom sheet holding all data (scrollable, Assistant sans-serif). No
           full-screen overlay covering the video. */}
       <div className="fixed inset-0 bg-[#0a0807] md:hidden">
-        {/* VIDEO — fixed at top, ~63% of screen height */}
-        <div className="absolute inset-x-0 top-0" style={{ height: "63vh" }}>
-          <VideoStage sim={sim} />
-          {/* Top row: exit + eye logo, over the video */}
-          <div className="absolute inset-x-0 top-0 flex items-center justify-between px-6 pt-4">
+        {/* METRICS — fixed top bar (ANXIETY / SOUND / OVERSTIMULATION) */}
+        <div className="absolute inset-x-0 top-0 z-20 border-b border-white/10 bg-black/70 px-5 pb-2.5 pt-3 backdrop-blur">
+          <div className="mb-2 flex items-center justify-between">
             <Link
               href="/explore"
-              className="rounded-md bg-black/40 px-2.5 py-1 text-[10px] uppercase tracking-[0.3em] text-white/60 transition-colors hover:text-[#ffc99d]"
+              className="text-[10px] uppercase tracking-[0.3em] text-white/50 transition-colors hover:text-[#ffc99d]"
             >
               ← exit
             </Link>
-            <img src="/icons/New_logo_eye.svg" alt="aura" className="w-7 opacity-80" />
+            <img src="/icons/New_logo_eye.svg" alt="aura" className="w-6 opacity-80" />
           </div>
+          <MetricBars metrics={metrics} />
+        </div>
+
+        {/* VIDEO — fixed at top, ~63% of screen height (below the metrics bar) */}
+        <div className="absolute inset-x-0 top-0" style={{ height: "63vh" }}>
+          <VideoStage sim={sim} />
         </div>
 
         {/* BOTTOM SHEET — draggable up/down, content scrollable */}
@@ -501,11 +494,6 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
 
           {/* Scrollable content */}
           <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-28" style={{ fontFamily: "var(--font-body)" }}>
-            {/* Metrics */}
-            <div className="mb-5">
-              <MetricBars metrics={metrics} />
-            </div>
-
             {/* Situation — sans-serif */}
             <h2 className="mb-5 text-xl font-semibold leading-snug text-white" style={{ fontFamily: "var(--font-body)" }}>
               {sim.situation || "Untitled situation"}

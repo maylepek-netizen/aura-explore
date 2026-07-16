@@ -1,5 +1,4 @@
 import { getSimulations } from "@/lib/supabase";
-import CornerIcons from "@/components/CornerIcons";
 import SimulationSelect from "./SimulationSelect";
 import ExploreFooter from "./ExploreFooter";
 
@@ -21,7 +20,7 @@ export default async function ExplorePage() {
         }}
       />
 
-      <CornerIcons />
+      <ExploreFooter />
 
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col items-center px-6 pb-16 pt-[14vh]">
         <div className="aura-rise w-full max-w-2xl">
@@ -46,8 +45,6 @@ export default async function ExplorePage() {
           )}
         </div>
       </div>
-
-      <ExploreFooter />
     </main>
   );
 }

@@ -1,5 +1,5 @@
+import Link from "next/link";
 import { getSimulations } from "@/lib/supabase";
-import CornerIcons from "@/components/CornerIcons";
 import BankGrid from "./BankGrid";
 
 // Data comes from Supabase at request time.
@@ -20,11 +20,11 @@ export default async function BankPage() {
         }}
       />
 
-      <CornerIcons />
-
-      {/* Top title bar */}
+      {/* Top title bar — eye logo (top-left) navigates back to start */}
       <div className="fixed inset-x-0 top-0 z-20 flex items-center gap-3 border-b border-white/[0.07] bg-black/70 px-7 py-4 backdrop-blur">
-        <img src="/icons/bank.svg" alt="" className="w-[18px] opacity-60" />
+        <Link href="/" aria-label="Back to start" className="flex items-center">
+          <img src="/icons/New_logo_eye.svg" alt="Back to start" className="w-[22px] opacity-70 transition-opacity hover:opacity-100" />
+        </Link>
         <span className="text-[11px] uppercase tracking-[0.2em] text-white/70">Simulation Bank</span>
         <span className="text-[10px] tracking-[0.1em] text-white/25">{simulations.length} saved</span>
       </div>
