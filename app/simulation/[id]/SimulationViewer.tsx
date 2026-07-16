@@ -84,7 +84,7 @@ function LoadingScreen({ visible }: { visible: boolean }) {
       className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0a0807]"
       style={{
         opacity: visible ? 1 : 0,
-        transition: "opacity 0.8s ease",
+        transition: "opacity 2.5s ease",
         pointerEvents: visible ? "auto" : "none",
       }}
     >
@@ -292,7 +292,7 @@ function DataSections({ sim }: { sim: Simulation }) {
         <Section label="Internal thoughts">
           <ul className="space-y-3">
             {thoughts.map((t, i) => (
-              <li key={i} className="text-[15px] leading-relaxed text-white/85">
+              <li key={i} className="text-[15px] leading-relaxed text-white/85" style={{ fontFamily: "var(--font-body)" }}>
                 <span className="italic">“{t.text}”</span>
                 {t.tag && (
                   <span className="ml-2 inline-block rounded-full border border-[#bcc2ff]/30 px-2 py-0.5 align-middle text-[10px] not-italic uppercase tracking-wider text-[#bcc2ff]/80">
@@ -386,10 +386,11 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
   const metrics = deriveMetrics(sim.sensory_load);
   const navigate = useNavigate();
 
-  // Brief pulsing-eye loading transition before the simulation reveals.
+  // Black pulsing-eye loading transition before the simulation reveals.
+  // Holds ~2.5s, then fades out over the 2.5s opacity transition.
   const [loadingScreen, setLoadingScreen] = useState(true);
   useEffect(() => {
-    const t = setTimeout(() => setLoadingScreen(false), 800);
+    const t = setTimeout(() => setLoadingScreen(false), 2500);
     return () => clearTimeout(t);
   }, []);
 
@@ -447,7 +448,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
     return (
       <ReflectionScreen
         onBank={() => navigate("/bank")}
-        onNew={() => navigate("/question")}
+        onNew={() => navigate("/explore")}
       />
     );
   }
