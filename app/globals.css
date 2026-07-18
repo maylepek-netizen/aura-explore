@@ -26,10 +26,25 @@
   --font-serif: var(--font-amiri), 'Amiri', serif;
 }
 
+html {
+  /* Belt-and-braces against horizontal scroll. Simulation text comes from the
+     database, so a single long unbroken string could otherwise widen the page
+     on a narrow phone — content we can't fully exercise at build time. */
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
+  overflow-x: hidden;
+  /* Never let a wide child stretch the page beyond the viewport. */
+  max-width: 100vw;
+}
+
+/* Long words in display headlines wrap instead of overflowing on 320px. */
+h1, h2, h3 {
+  overflow-wrap: break-word;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -82,9 +97,15 @@ h1, h2, h3, h4, h5, h6 {
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  /* Tracking scales down on narrow screens. At a flat 0.12em the trailing
+     letter-space pushed "Stop simulation" ~2px past its own box, clipping it. */
+  letter-spacing: clamp(0.04em, 0.5vw, 0.12em);
   opacity: 0.8;
   cursor: pointer;
+  /* Every CTA in the app is a tap target — enforce the 44px minimum here
+     rather than per-button, and never let one exceed its container. */
+  min-height: 44px;
+  max-width: 100%;
   transition: opacity 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 .aura-cta:hover {

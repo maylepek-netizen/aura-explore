@@ -22,12 +22,29 @@ export default async function ExplorePage() {
 
       <ExploreFooter />
 
-      <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col items-center px-6 pb-16 pt-[14vh]">
+      {/* min-h-[100dvh] not min-h-screen: 100vh ignores mobile browser chrome
+          and pushes content off-screen. Top padding is clamped so a short phone
+          doesn't spend 14% of its height on empty space, and the bottom padding
+          clears the home indicator. px-4 on 320px screens buys back 16px. */}
+      <div
+        className="mx-auto flex min-h-[100dvh] w-full max-w-4xl flex-col items-center px-4 min-[360px]:px-6"
+        style={{
+          paddingTop: "clamp(48px, 14dvh, 140px)",
+          paddingBottom: "calc(4rem + env(safe-area-inset-bottom))",
+        }}
+      >
         <div className="aura-rise w-full max-w-2xl">
-          <h1 className="mb-3 text-center font-serif text-4xl font-normal text-[#ffc99d] sm:text-5xl">
+          {/* Fluid headline: fits 320px without clipping, grows on tablets. */}
+          <h1
+            className="mb-3 text-center font-serif font-normal text-[#ffc99d]"
+            style={{ fontSize: "clamp(1.75rem, 8.5vw, 3rem)", lineHeight: 1.15, textWrap: "balance" }}
+          >
             Choose a Simulation
           </h1>
-          <p className="mb-8 text-center text-sm tracking-[0.02em] text-white/55">
+          <p
+            className="mb-8 text-center tracking-[0.02em] text-white/55"
+            style={{ fontSize: "clamp(0.8125rem, 3.6vw, 0.875rem)" }}
+          >
             Select a situation to step inside it.
           </p>
 

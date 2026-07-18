@@ -310,10 +310,22 @@ function ReflectionScreen({
 
 function MetricBars({ metrics }: { metrics: ReturnType<typeof deriveMetrics> }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    // gap-2 on the narrowest phones buys back horizontal room for the labels.
+    <div className="grid grid-cols-3 gap-2 min-[360px]:gap-3">
       {metrics.map((m) => (
         <div key={m.label} className="min-w-0">
-          <div className="truncate text-[9px] font-medium uppercase tracking-[0.18em] text-white/60">
+          {/* "OVERSTIMULATION" was truncated at 320px: 0.18em tracking on a
+              third of a 320px viewport leaves ~85px for ~97px of text. Fluid
+              size + tighter tracking on small screens lets it render in full.
+              No truncate — the label wraps instead of being cut. */}
+          <div
+            className="font-medium uppercase leading-tight text-white/60"
+            style={{
+              fontSize: "clamp(7.5px, 2.4vw, 9px)",
+              letterSpacing: "clamp(0.04em, 0.9vw, 0.18em)",
+              overflowWrap: "anywhere",
+            }}
+          >
             {m.label}
           </div>
           <div className="mt-1 h-[3px] w-full overflow-hidden rounded-full bg-white/12">
@@ -385,10 +397,21 @@ function DataSections({ sim }: { sim: Simulation }) {
 
 function StopButton({ onStop }: { onStop: () => void }) {
   return (
+    // This button's container collapses to ~88px in the narrow desktop
+    // sidebar. With 24px padding per side only 40px was left for a ~90px
+    // label, clipping it. Padding and tracking now scale with the container,
+    // and the label may wrap to a second line rather than being cut off.
+    // (Measured at 768px: clientW 88 vs scrollW 90 before this change.)
     <button
       type="button"
       onClick={onStop}
-      className="aura-cta flex w-full items-center justify-center px-6 py-3.5 text-sm uppercase"
+      className="aura-cta flex w-full items-center justify-center py-3.5 text-center uppercase"
+      style={{
+        paddingInline: "clamp(8px, 3vw, 24px)",
+        fontSize: "clamp(11px, 2.6vw, 14px)",
+        letterSpacing: "clamp(0.02em, 0.4vw, 0.12em)",
+        overflowWrap: "anywhere",
+      }}
     >
       Stop simulation
     </button>
@@ -540,11 +563,18 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
           full-screen overlay covering the video. */}
       <div className="fixed inset-0 bg-[#0a0807] md:hidden">
         {/* METRICS — fixed top bar (ANXIETY / SOUND / OVERSTIMULATION) */}
-        <div className="absolute inset-x-0 top-0 z-20 border-b border-white/10 bg-black/70 px-5 pb-2.5 pt-3 backdrop-blur">
+        <div
+          className="absolute inset-x-0 top-0 z-20 border-b border-white/10 bg-black/70 px-4 pb-2.5 pt-3 backdrop-blur min-[360px]:px-5"
+          // Clear the notch — this bar is flush to the top of the screen.
+          style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+        >
           <div className="mb-2 flex items-center justify-between">
+            {/* Exit is the primary way out of a running simulation and measured
+                just 15px tall. -m-2.5 p-2.5 grows the hit area to 44px without
+                shifting the label. */}
             <Link
               href="/explore"
-              className="text-[10px] uppercase tracking-[0.3em] text-white/50 transition-colors hover:text-[#ffc99d]"
+              className="-m-2.5 flex min-h-[44px] items-center p-2.5 text-[10px] uppercase tracking-[0.3em] text-white/50 transition-colors hover:text-[#ffc99d]"
             >
               ← exit
             </Link>
@@ -617,7 +647,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
             <div className="mb-5 flex items-center justify-between">
               <Link
                 href="/explore"
-                className="inline-block text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
+                className="-m-2.5 inline-flex min-h-[44px] items-center p-2.5 text-[10px] uppercase tracking-[0.3em] text-white/40 transition-colors hover:text-[#ffc99d]"
               >
                 ← exit
               </Link>

@@ -320,7 +320,11 @@ export default function LandingPage() {
                   marginTop: 24,
                   background: "#FFC99D", color: "#000",
                   border: "none", borderRadius: 12,
-                  padding: "16px 48px",
+                  // Fluid horizontal padding: a flat 48px each side crowds a
+                  // 320px screen. minHeight guarantees the 44px touch target.
+                  padding: "16px clamp(28px, 11vw, 48px)",
+                  minHeight: 44,
+                  maxWidth: "100%",
                   fontSize: 13, letterSpacing: "0.12em",
                   fontWeight: 600, cursor: "pointer",
                   opacity: 0.8,

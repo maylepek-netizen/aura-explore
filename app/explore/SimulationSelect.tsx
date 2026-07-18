@@ -37,16 +37,22 @@ export default function SimulationSelect({
         }}
       />
 
-      <div className="no-scrollbar max-h-[55vh] w-full overflow-y-auto overscroll-contain rounded-2xl border border-white/12 bg-black/40 p-2 backdrop-blur-sm">
+      {/* dvh so the list doesn't resize as mobile browser chrome shows/hides. */}
+      <div className="no-scrollbar max-h-[55dvh] w-full overflow-y-auto overscroll-contain rounded-2xl border border-white/12 bg-black/40 p-2 backdrop-blur-sm">
         <ul className="flex flex-col gap-1.5">
           {simulations.map((sim) => (
             <li key={sim.id}>
               <button
                 type="button"
                 onClick={() => select(sim.id)}
-                className="group flex w-full items-center gap-3 rounded-xl border border-white/8 bg-black/30 px-5 py-4 text-left transition-all duration-200 hover:border-[#ffc99d]/40 hover:bg-black/50"
+                className="group flex w-full min-h-[44px] items-center gap-3 rounded-xl border border-white/8 bg-black/30 px-4 py-4 text-left transition-all duration-200 hover:border-[#ffc99d]/40 hover:bg-black/50 min-[360px]:px-5"
               >
-                <span className="flex-1 font-serif text-base leading-snug text-white/55 transition-colors duration-200 group-hover:text-white/90">
+                {/* break-words: a long unbroken situation string would otherwise
+                    force the row wider than the viewport. */}
+                <span
+                  className="min-w-0 flex-1 break-words font-serif leading-snug text-white/55 transition-colors duration-200 group-hover:text-white/90"
+                  style={{ fontSize: "clamp(0.875rem, 3.8vw, 1rem)" }}
+                >
                   {sim.situation || `Untitled situation #${sim.id}`}
                 </span>
                 <span

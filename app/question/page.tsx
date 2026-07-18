@@ -89,7 +89,9 @@ export default function QuestionPage() {
 
           /* Headline is the hero — large, serif, peach, wraps freely over 4-5 lines. */
           .q-heading {
-            font-size: clamp(48px, 15vw, 68px) !important;
+            /* Floor lowered 48px → 40px: at 320px the longest word
+               ("different") rendered at 48px overflowed its line box. */
+            font-size: clamp(40px, 14vw, 68px) !important;
             line-height: 1.06 !important;
             max-width: 100% !important;
             text-wrap: balance;
@@ -105,13 +107,20 @@ export default function QuestionPage() {
             max-width: 92% !important;
             overflow-wrap: break-word;
           }
-          /* Full-width pill button with ~11% side margins, pushed 20px lower */
-          .q-btnwrap { width: 100% !important; padding: 0 11% !important; margin-top: 20px !important; }
+          /* Full-width pill button with ~11% side margins, pushed 20px lower.
+             padding-bottom clears the home indicator on notched phones. */
+          .q-btnwrap {
+            width: 100% !important;
+            padding: 0 11% !important;
+            margin-top: 20px !important;
+            margin-bottom: env(safe-area-inset-bottom) !important;
+          }
           .q-btnwrap button {
             width: 100% !important;
             padding: 20px 0 !important;
+            min-height: 44px !important;
             border-radius: 999px !important;
-            font-size: 17px !important;
+            font-size: clamp(15px, 4.4vw, 17px) !important;
             letter-spacing: 0.02em !important;
             opacity: 1 !important;
             display: flex !important;

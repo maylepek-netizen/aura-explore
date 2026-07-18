@@ -54,7 +54,11 @@ function SimCard({
         position: "absolute",
         left: x,
         top: y,
-        width: 200,
+        // Fluid card width: on a 320px phone a fixed 200px card leaves almost
+        // no breathing room, and the thumbnail crowds the edge. Scale with the
+        // viewport but never below 150px (unreadable) or above 200px (the
+        // original desktop size).
+        width: "clamp(150px, 46vw, 200px)",
         cursor: "pointer",
         transform: hovered ? "scale(1.06)" : "scale(1)",
         filter: hovered ? "grayscale(0%) brightness(1.05)" : "grayscale(100%)",
@@ -67,7 +71,9 @@ function SimCard({
       {/* Thumbnail */}
       <div style={{
         width: "100%",
-        height: 120,
+        // Aspect-ratio rather than a fixed 120px: the card width is now fluid,
+        // so a fixed height would distort the thumbnail on small screens.
+        aspectRatio: "5 / 3",
         borderRadius: 8,
         background: "rgba(255,255,255,0.06)",
         border: `1px solid ${hovered ? "rgba(255,201,157,0.35)" : "rgba(255,255,255,0.1)"}`,
@@ -101,7 +107,17 @@ function SimCard({
 
       {/* Caption */}
       <div style={{ marginTop: 8, padding: "0 2px" }}>
-        <p style={{ fontSize: 10, lineHeight: 1.55, color: hovered ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.3)", margin: 0, transition: "color 0.4s" }}>
+        <p style={{
+          // 10px is below comfortable mobile reading size; scale up slightly on
+          // wider screens. overflowWrap stops a long unbroken situation string
+          // (e.g. a URL or a long compound word) from pushing past the card.
+          fontSize: "clamp(11px, 2.9vw, 12px)",
+          lineHeight: 1.55,
+          overflowWrap: "anywhere",
+          color: hovered ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.3)",
+          margin: 0,
+          transition: "color 0.4s",
+        }}>
           {snippet}
         </p>
       </div>
@@ -172,17 +188,25 @@ export default function BankGrid({ simulations }: { simulations: Card[] }) {
         </div>
       </div>
 
-      {/* Hint */}
-      <div className="pointer-events-none fixed bottom-[76px] left-1/2 z-20 -translate-x-1/2 text-center text-[9px] uppercase tracking-[0.2em] text-white/20">
+      {/* Hint — sits above the footer button, clearing the home indicator. */}
+      <div
+        className="pointer-events-none fixed left-1/2 z-20 max-w-[92vw] -translate-x-1/2 text-center text-[9px] uppercase tracking-[0.2em] text-white/20"
+        style={{ bottom: "calc(76px + env(safe-area-inset-bottom))" }}
+      >
         drag / swipe to explore · tap to enter
       </div>
 
       {/* Footer */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex items-center justify-end px-6 py-4">
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex items-center justify-end px-6 py-4"
+        // Keeps the button clear of the home indicator on notched phones.
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      >
         <button
           type="button"
           onClick={() => navigate("/research")}
-          className="pointer-events-auto rounded-xl border border-[#ffc99d]/50 bg-[#ffc99d]/[0.06] px-5 py-2.5 text-[13px] tracking-[0.04em] text-[#ffc99d] transition-colors hover:bg-[#ffc99d]/10"
+          // min-h-[44px]: measured 42px, just under the touch minimum.
+          className="pointer-events-auto flex min-h-[44px] items-center rounded-xl border border-[#ffc99d]/50 bg-[#ffc99d]/[0.06] px-5 py-2.5 text-[13px] tracking-[0.04em] text-[#ffc99d] transition-colors hover:bg-[#ffc99d]/10"
         >
           Read the Research →
         </button>
