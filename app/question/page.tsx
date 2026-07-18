@@ -52,11 +52,13 @@ export default function QuestionPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&display=swap');
 
-        /* Italic accent inside any headline — reusable across the intro flow. */
+        /* Accent word inside any headline — italic AND peach, same serif.
+           Reusable across the intro flow: wrap a word in <em>. The rest of the
+           headline stays white, so this is the only coloured word. */
         .q-heading em {
           font-style: italic;
           font-family: inherit;
-          color: inherit;
+          color: #FFC99D;
         }
 
         /* Desktop keeps the blurred video + radial vignette; the flat mobile
@@ -96,8 +98,8 @@ export default function QuestionPage() {
             max-width: 92% !important;
             overflow-wrap: break-word;
           }
-          /* Full-width pill button with ~11% side margins */
-          .q-btnwrap { width: 100% !important; padding: 0 11% !important; }
+          /* Full-width pill button with ~11% side margins, pushed 20px lower */
+          .q-btnwrap { width: 100% !important; padding: 0 11% !important; margin-top: 20px !important; }
           .q-btnwrap button {
             width: 100% !important;
             padding: 20px 0 !important;
@@ -190,7 +192,8 @@ export default function QuestionPage() {
               <h1 className="q-heading" style={{
                 fontFamily: "'Amiri', serif",
                 fontSize: "clamp(2.2rem, 4vw, 3.4rem)",
-                color: "#FFC99D",
+                // White/off-white base; the <em> accent word carries the peach.
+                color: "#F5EFE8",
                 textAlign: "center",
                 lineHeight: 1.3,
                 fontWeight: 400,
