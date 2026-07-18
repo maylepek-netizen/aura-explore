@@ -111,6 +111,62 @@ function ReflectionScreen({
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&display=swap');
+
+        /* Accent word inside the headline — italic peach, same serif. */
+        .rf-headline em { font-style: italic; font-family: inherit; color: #FFC99D; }
+
+        .rf-logo { display: none; }
+
+        @media (max-width: 768px) {
+          /* Flat near-black: drop the blurred video wash and radial glow so the
+             contrast is white-on-black with a single peach accent. */
+          .rf-video, .rf-radial { display: none !important; }
+          .rf-flat { display: block !important; }
+          .rf-logo { display: block !important; }
+
+          /* Stack sits slightly above centre, tight and continuous. */
+          .rf-content {
+            justify-content: center !important;
+            padding: 96px 20px 40px !important;
+          }
+
+          /* Eyebrow — peach, above the headline with a small gap. */
+          .rf-eyebrow {
+            font-size: 21px !important;
+            opacity: 0.85 !important;
+            margin: 0 0 14px !important;
+            line-height: 1.3 !important;
+          }
+
+          /* Hero headline — white, serif, wraps freely over 4-5 lines. */
+          .rf-headline {
+            font-size: clamp(40px, 11vw, 56px) !important;
+            line-height: 1.08 !important;
+            margin: 0 0 26px !important;
+            max-width: 100% !important;
+            text-wrap: balance;
+            overflow-wrap: break-word;
+          }
+          .rf-headline br { display: none; }
+
+          .rf-subq { margin: 0 0 26px !important; font-size: 12px !important; }
+
+          /* Buttons match the intro screens' Next button width/margins. */
+          .rf-buttons {
+            width: 100% !important;
+            flex-direction: column !important;
+            gap: 16px !important;
+            padding: 0 11% !important;
+          }
+          .rf-buttons button {
+            width: 100% !important;
+            padding: 19px 0 !important;
+            border-radius: 999px !important;
+            font-size: 16px !important;
+            opacity: 1 !important;
+            white-space: nowrap;
+          }
+        }
       `}</style>
 
       <div
@@ -120,8 +176,17 @@ function ReflectionScreen({
           opacity: visible ? 1 : 0, transition: "opacity 1.5s ease-in-out",
         }}
       >
+        {/* Mobile: eye logo top-left, matching the intro screens */}
+        <img
+          className="rf-logo"
+          src="/icons/New_logo_eye.svg"
+          alt=""
+          style={{ position: "absolute", top: 22, left: 22, width: 30, opacity: 0.85, zIndex: 5 }}
+        />
+
         {/* Background video */}
         <video
+          className="rf-video"
           src="https://res.cloudinary.com/duhsqezo3/video/upload/v1781856804/%D7%90%D7%A0%D7%99_%D7%A8%D7%95%D7%A6%D7%94_%D7%A9%D7%96%D7%94_%D7%99%D7%94%D7%99%D7%94_%D7%AA%D7%A7%D7%A8%D7%99%D7%91%D7%99%D7%9D_%D7%A9%D7%9C_%D7%94_1_nlathf.mp4"
           autoPlay loop muted playsInline
           style={{
@@ -136,21 +201,24 @@ function ReflectionScreen({
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)" }} />
 
         {/* Radial gradient */}
-        <div style={{
+        <div className="rf-radial" style={{
           position: "absolute", inset: 0,
           background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.85) 100%)",
           pointerEvents: "none",
         }} />
 
+        {/* Mobile: flat near-black backdrop */}
+        <div className="rf-flat" style={{ position: "absolute", inset: 0, background: "#0a0807", display: "none" }} />
+
         {/* Centered content */}
-        <div style={{
+        <div className="rf-content" style={{
           position: "absolute", inset: 0,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
           padding: "0 24px",
           gap: 0,
         }}>
-          <h1 style={{
+          <h1 className="rf-eyebrow" style={{
             fontFamily: "var(--font-body)",
             fontSize: "clamp(1.2rem, 4vw, 3.2rem)",
             color: "#FFC99D",
@@ -163,7 +231,7 @@ function ReflectionScreen({
             Every perception tells a different story.
           </h1>
 
-          <p style={{
+          <p className="rf-headline" style={{
             fontFamily: "'Amiri', serif",
             fontSize: "clamp(1.92rem, 3.84vw, 3.12rem)",
             color: "white",
@@ -173,10 +241,10 @@ function ReflectionScreen({
             margin: "0 0 56px",
             maxWidth: 820,
           }}>
-            What you experienced was only one possible<br />interpretation of the world.
+            What you experienced was only one possible interpretation of the world.
           </p>
 
-          <p style={{
+          <p className="rf-subq" style={{
             fontSize: "clamp(0.75rem, 1.2vw, 0.95rem)",
             letterSpacing: "0.22em",
             textTransform: "uppercase",
@@ -188,7 +256,7 @@ function ReflectionScreen({
             Would you like to explore another perspective?
           </p>
 
-          <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+          <div className="rf-buttons" style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
             <button
               type="button"
               onClick={onBank}
