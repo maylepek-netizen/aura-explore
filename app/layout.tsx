@@ -3,6 +3,7 @@ import { Amiri, Assistant } from "next/font/google";
 import "./globals.css";
 import { TransitionProvider } from "./TransitionProvider";
 import { BackgroundMusic } from "./BackgroundMusic";
+import DesktopBlock from "@/components/DesktopBlock";
 
 const amiri = Amiri({
   variable: "--font-amiri",
@@ -42,12 +43,14 @@ export default function RootLayout({
       className={`${amiri.variable} ${assistant.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-[#ffc99d] selection:text-black">
-        <TransitionProvider>
-          <BackgroundMusic />
-          <div className="page-fade" style={{ display: "contents" }}>
-            {children}
-          </div>
-        </TransitionProvider>
+        <DesktopBlock>
+          <TransitionProvider>
+            <BackgroundMusic />
+            <div className="page-fade" style={{ display: "contents" }}>
+              {children}
+            </div>
+          </TransitionProvider>
+        </DesktopBlock>
       </body>
     </html>
   );
