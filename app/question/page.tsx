@@ -72,9 +72,16 @@ export default function QuestionPage() {
           .q-mobile-flat { display: block !important; }
           .q-radial { display: none !important; }
           /* Content fills full width; sits slightly above true centre. */
+          /* Centre the content block in the space BELOW the top bar.
+             top:60px clears the logo/step row, and 100dvh keeps the centring
+             stable when mobile browser chrome shows/hides. Padding is symmetric
+             so the empty space above and below the block stays equal. */
           .q-center {
             left: 0 !important;
-            padding: 0 20px 40px !important;
+            top: 60px !important;
+            height: calc(100dvh - 60px) !important;
+            bottom: auto !important;
+            padding: 20px !important;
             gap: 34px !important;
             justify-content: center !important;
           }
