@@ -24,6 +24,13 @@ function getSupabase(): SupabaseClient | null {
   return _supabase
 }
 
+// Records whose Cloudinary asset was deleted from the account. Their rows still
+// carry a well-formed URL, so no filter can spot them by shape — the URL simply
+// 404s. Verified dead by HEAD probe on 2026-07-18; listing them here keeps a
+// dead simulation from ever being opened, without paying for a liveness request
+// on every page load.
+const DEAD_SIMULATION_IDS = [36, 41]
+
 export async function getSimulations(): Promise<Simulation[]> {
   const supabase = getSupabase()
   if (!supabase) return []
@@ -31,6 +38,7 @@ export async function getSimulations(): Promise<Simulation[]> {
     .from('simulations')
     .select('*')
     .filter('video_url', 'like', 'https://res.cloudinary.com%')
+    .not('id', 'in', `(${DEAD_SIMULATION_IDS.join(',')})`)
     .order('id', { ascending: false })
   if (error) return []
   return (data as Simulation[]) || []

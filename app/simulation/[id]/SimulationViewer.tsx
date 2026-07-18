@@ -397,6 +397,7 @@ function StopButton({ onStop }: { onStop: () => void }) {
 
 function VideoStage({ sim, onReady }: { sim: Simulation; onReady?: () => void }) {
   const [failed, setFailed] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   // No video to wait for — reveal immediately rather than holding on black.
   useEffect(() => {
     if (!sim.video_url || failed) onReady?.();
@@ -406,11 +407,18 @@ function VideoStage({ sim, onReady }: { sim: Simulation; onReady?: () => void })
     <div className="relative h-full w-full overflow-hidden bg-black">
       {sim.video_url && !failed ? (
         <video
+          ref={videoRef}
           src={sim.video_url}
           autoPlay
           loop
           playsInline
-          onCanPlay={() => onReady?.()}
+          // `muted` is REQUIRED for autoplay: iOS Safari and Chrome Android
+          // refuse to autoplay video with audio, leaving only the first frame
+          // painted — which reads as a static image. The simulation's own
+          // soundscape is played separately, so muting the video track costs
+          // us nothing here.
+          muted
+          onCanPlay={() => { onReady?.(); void videoRef.current?.play().catch(() => {}); }}
           onError={() => { setFailed(true); onReady?.(); }}
           // object-cover + centre: fills the frame on a portrait phone by
           // cropping the sides, never letterboxing or stretching.
