@@ -35,12 +35,12 @@ export default function AppHeader({
         lineHeight: 1,
       }}
     >
-      {/* Mobile: hide the right (Simulation | Exit) block, push step label to the right */}
+      {/* Mobile: hide the right block and centre the step label below the logo */}
       <style>{`
         @media (max-width: 768px) {
-          .aura-header { left: 0 !important; padding: 0 20px !important; justify-content: flex-end !important; }
+          .aura-header { left: 0 !important; padding: 0 20px !important; justify-content: center !important; }
           .aura-header-right { display: none !important; }
-          .aura-header-step { text-align: right; }
+          .aura-header-step { text-align: center; font-size: 11px !important; letter-spacing: 0.24em !important; }
         }
       `}</style>
 

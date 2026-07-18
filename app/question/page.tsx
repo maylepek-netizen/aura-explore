@@ -52,32 +52,64 @@ export default function QuestionPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&display=swap');
 
+        /* Italic accent inside any headline — reusable across the intro flow. */
+        .q-heading em {
+          font-style: italic;
+          font-family: inherit;
+          color: inherit;
+        }
+
+        /* Desktop keeps the blurred video + radial vignette; the flat mobile
+           backdrop is off here. */
+        .q-mobile-flat { display: none; }
+
         @media (max-width: 768px) {
           /* Hide the simulation serial on mobile */
           .q-serial { display: none !important; }
-          /* Center content fills full width (sidebar overlaps, content clears it) */
-          .q-center { left: 0 !important; padding: 0 20px !important; gap: 40px !important; }
-          /* Question text: smaller, centered, wider container, max 2 lines, no mid-word break */
-          .q-textwrap { width: 90% !important; max-width: 90% !important; }
+          /* Flat near-black backdrop; drop the grey radial wash. */
+          .q-mobile-flat { display: block !important; }
+          .q-radial { display: none !important; }
+          /* Content fills full width; sits slightly above true centre. */
+          .q-center {
+            left: 0 !important;
+            padding: 0 20px 40px !important;
+            gap: 34px !important;
+            justify-content: center !important;
+          }
+          .q-textwrap { width: 100% !important; max-width: 100% !important; gap: 26px !important; }
+
+          /* Headline is the hero — large, serif, peach, wraps freely over 4-5 lines. */
           .q-heading {
-            font-size: clamp(1.4rem, 6vw, 2rem) !important;
+            font-size: clamp(48px, 15vw, 68px) !important;
+            line-height: 1.06 !important;
             max-width: 100% !important;
-            word-wrap: break-word;
+            text-wrap: balance;
             overflow-wrap: break-word;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            /* undo the old 2-line clamp */
+            display: block !important;
+            -webkit-line-clamp: none !important;
+            overflow: visible !important;
           }
           .q-subtitle {
-            font-size: clamp(0.95rem, 3.5vw, 1.1rem) !important;
-            max-width: 100% !important;
-            word-wrap: break-word;
+            font-size: 18px !important;
+            line-height: 1.45 !important;
+            max-width: 92% !important;
             overflow-wrap: break-word;
           }
-          /* Button container wider on mobile */
-          .q-btnwrap { width: 90% !important; }
-          .q-btnwrap button { width: 100% !important; padding: 16px 0 !important; }
+          /* Full-width pill button with ~11% side margins */
+          .q-btnwrap { width: 100% !important; padding: 0 11% !important; }
+          .q-btnwrap button {
+            width: 100% !important;
+            padding: 20px 0 !important;
+            border-radius: 999px !important;
+            font-size: 17px !important;
+            letter-spacing: 0.02em !important;
+            opacity: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 12px !important;
+          }
         }
       `}</style>
 
@@ -104,8 +136,18 @@ export default function QuestionPage() {
           pointerEvents: "none",
         }} />
 
+        {/* Mobile: flat near-black behind the type (no grey wash). Lifts during
+            the reveal phase so the video is still visible then. */}
+        <div className="q-mobile-flat" style={{
+          position: "absolute", inset: 0,
+          background: "#0d0a08",
+          opacity: overlayOpacity > 0.1 ? 1 : 0,
+          transition: "opacity 1.5s ease-in-out",
+          pointerEvents: "none",
+        }} />
+
         {/* Radial gradient — fades with overlay */}
-        <div style={{
+        <div className="q-radial" style={{
           position: "absolute", inset: 0,
           background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%)",
           opacity: overlayOpacity > 0.1 ? 1 : 0,
@@ -155,7 +197,7 @@ export default function QuestionPage() {
                 margin: 0,
                 maxWidth: 820,
               }}>
-                What if the world around you felt different than it does?
+                What if the world around you felt <em>different</em> than it does?
               </h1>
 
               <p className="q-subtitle" style={{
@@ -191,7 +233,7 @@ export default function QuestionPage() {
                   transition: "all 0.2s ease",
                 }}
               >
-                Next
+                Next <span aria-hidden style={{ fontSize: "1.15em", lineHeight: 1 }}>→</span>
               </button>
             </div>
           </div>
