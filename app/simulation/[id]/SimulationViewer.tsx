@@ -84,7 +84,7 @@ function LoadingScreen({ visible }: { visible: boolean }) {
       className="fixed inset-0 z-[60] bg-black"
       style={{
         opacity: visible ? 1 : 0,
-        transition: "opacity 2.5s ease",
+        transition: "opacity 400ms ease",
         pointerEvents: visible ? "auto" : "none",
       }}
     />
@@ -395,8 +395,13 @@ function StopButton({ onStop }: { onStop: () => void }) {
   );
 }
 
-function VideoStage({ sim }: { sim: Simulation }) {
+function VideoStage({ sim, onReady }: { sim: Simulation; onReady?: () => void }) {
   const [failed, setFailed] = useState(false);
+  // No video to wait for — reveal immediately rather than holding on black.
+  useEffect(() => {
+    if (!sim.video_url || failed) onReady?.();
+  }, [sim.video_url, failed, onReady]);
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       {sim.video_url && !failed ? (
@@ -405,8 +410,12 @@ function VideoStage({ sim }: { sim: Simulation }) {
           autoPlay
           loop
           playsInline
-          onError={() => setFailed(true)}
+          onCanPlay={() => onReady?.()}
+          onError={() => { setFailed(true); onReady?.(); }}
+          // object-cover + centre: fills the frame on a portrait phone by
+          // cropping the sides, never letterboxing or stretching.
           className="h-full w-full object-cover"
+          style={{ objectPosition: "center" }}
         />
       ) : (
         <div
@@ -443,9 +452,12 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
   const metrics = deriveMetrics(sim.sensory_load);
   const navigate = useNavigate();
 
-  // Black pulsing-eye loading transition before the simulation reveals.
-  // Holds ~2.5s, then fades out over the 2.5s opacity transition.
+  // Plain black cover carried over from the selection dissolve. It lifts as
+  // soon as the video can play (see onCanPlay in VideoStage), with a short
+  // fallback so a stalled/absent video never leaves the screen black forever.
+  // No eye loader on this path.
   const [loadingScreen, setLoadingScreen] = useState(true);
+  const revealSimulation = useCallback(() => setLoadingScreen(false), []);
   useEffect(() => {
     const t = setTimeout(() => setLoadingScreen(false), 2500);
     return () => clearTimeout(t);
@@ -533,16 +545,25 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
           <MetricBars metrics={metrics} />
         </div>
 
-        {/* VIDEO — fixed at top, ~63% of screen height (below the metrics bar) */}
-        <div className="absolute inset-x-0 top-0" style={{ height: "63vh" }}>
-          <VideoStage sim={sim} />
+        {/* VIDEO — fills every pixel between the top of the screen and the
+            sheet, so there is never an empty black band. VideoStage uses
+            object-fit: cover, cropping the sides on a portrait phone rather
+            than letterboxing. Tracks the sheet as it is dragged. */}
+        <div
+          className="absolute inset-x-0 top-0"
+          style={{
+            height: `calc(100dvh - ${sheetFraction * 100}dvh)`,
+            transition: dragging ? "none" : "height 260ms ease",
+          }}
+        >
+          <VideoStage sim={sim} onReady={revealSimulation} />
         </div>
 
         {/* BOTTOM SHEET — draggable up/down, content scrollable */}
         <div
           className="absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl border-t border-white/10"
           style={{
-            height: `${sheetFraction * 100}vh`,
+            height: `${sheetFraction * 100}dvh`,
             background: "rgba(0,0,0,0.85)",
             backdropFilter: "blur(8px)",
             transition: dragging ? "none" : "height 260ms ease",
@@ -603,7 +624,7 @@ export default function SimulationViewer({ sim }: { sim: Simulation }) {
 
         {/* CENTER: video + stop */}
         <div className="relative min-h-0">
-          <VideoStage sim={sim} />
+          <VideoStage sim={sim} onReady={revealSimulation} />
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-center px-10 pb-8">
             <div className="w-full max-w-xs">
               <StopButton onStop={stopSimulation} />

@@ -16,30 +16,26 @@ export default function SimulationSelect({
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // Show the loading screen, then navigate after a short beat so the pulsing
-  // eye reads as a deliberate transition into the simulation.
+  // Clean black dissolve into the simulation — no eye loader on this path.
+  // Fade to black over 350ms, then navigate.
   const select = (id: number) => {
     if (loading) return;
     setLoading(true);
-    setTimeout(() => navigate(`/simulation/${id}`), 900);
+    setTimeout(() => navigate(`/simulation/${id}`), 350);
   };
 
   return (
     <>
-      {loading && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0a0807]">
-          <img
-            src="/icons/New_logo_eye.svg"
-            alt=""
-            className="aura-select-eye"
-            style={{ width: "clamp(60px, 12vw, 80px)", opacity: 0.9 }}
-          />
-          <style>{`
-            @keyframes aura-select-eye-kf { 0%,100%{opacity:0.55;transform:scale(0.94)} 50%{opacity:1;transform:scale(1.06)} }
-            .aura-select-eye { animation: aura-select-eye-kf 1.6s ease-in-out infinite; }
-          `}</style>
-        </div>
-      )}
+      {/* Plain black dissolve. Mounted always so the fade can animate in. */}
+      <div
+        aria-hidden
+        className="fixed inset-0 z-[60] bg-black"
+        style={{
+          opacity: loading ? 1 : 0,
+          transition: "opacity 350ms ease",
+          pointerEvents: loading ? "auto" : "none",
+        }}
+      />
 
       <div className="no-scrollbar max-h-[55vh] w-full overflow-y-auto overscroll-contain rounded-2xl border border-white/12 bg-black/40 p-2 backdrop-blur-sm">
         <ul className="flex flex-col gap-1.5">
