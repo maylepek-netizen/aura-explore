@@ -37,7 +37,12 @@ export async function getSimulations(): Promise<Simulation[]> {
   const { data, error } = await supabase
     .from('simulations')
     .select('*')
-    .filter('video_url', 'like', 'https://res.cloudinary.com%')
+    // Two storage eras: legacy Cloudinary, and Supabase Storage for anything
+    // generated after the migration. Both are served as plain public URLs.
+    .or(
+      'video_url.like.https://res.cloudinary.com%,' +
+        'video_url.like.https://bofduginwcsbiqhdsmdd.supabase.co%'
+    )
     .not('id', 'in', `(${DEAD_SIMULATION_IDS.join(',')})`)
     .order('id', { ascending: false })
   if (error) return []
