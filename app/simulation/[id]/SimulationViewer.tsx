@@ -124,47 +124,59 @@ function ReflectionScreen({
           .rf-flat { display: block !important; }
           .rf-logo { display: block !important; }
 
-          /* Stack sits slightly above centre, tight and continuous. */
+          /* Everything below scales with the viewport rather than using fixed
+             pixel values, so the screen adapts to any phone size instead of
+             looking right on only one. Vertical rhythm uses vh/dvh so short
+             phones (iPhone SE, 568px tall) compress instead of overflowing. */
           .rf-content {
             justify-content: center !important;
-            padding: 96px 20px 40px !important;
+            padding:
+              calc(clamp(56px, 11vh, 96px) + env(safe-area-inset-top))
+              clamp(16px, 5vw, 20px)
+              calc(clamp(24px, 5vh, 40px) + env(safe-area-inset-bottom)) !important;
           }
 
-          /* Eyebrow — peach, above the headline with a small gap. */
-          .rf-eyebrow {
-            font-size: 21px !important;
-            opacity: 0.85 !important;
-            margin: 0 0 14px !important;
-            line-height: 1.3 !important;
-          }
-
-          /* Hero headline — white, serif, wraps freely over 4-5 lines. */
+          /* Hero headline — white, serif, wraps freely. The 40px floor was too
+             large for a 320px screen; 30px keeps it readable without clipping,
+             and it still reaches 56px on large phones. */
           .rf-headline {
-            font-size: clamp(40px, 11vw, 56px) !important;
+            font-size: clamp(30px, 9.5vw, 56px) !important;
             line-height: 1.08 !important;
-            margin: 0 0 26px !important;
+            margin: 0 0 clamp(16px, 3.5vh, 26px) !important;
             max-width: 100% !important;
             text-wrap: balance;
             overflow-wrap: break-word;
           }
           .rf-headline br { display: none; }
 
-          .rf-subq { margin: 0 0 26px !important; font-size: 12px !important; }
+          .rf-subq {
+            margin: 0 0 clamp(16px, 3.5vh, 26px) !important;
+            font-size: clamp(10px, 3.1vw, 12px) !important;
+            letter-spacing: clamp(0.12em, 0.6vw, 0.22em) !important;
+          }
 
           /* Buttons match the intro screens' Next button width/margins. */
           .rf-buttons {
             width: 100% !important;
             flex-direction: column !important;
-            gap: 16px !important;
-            padding: 0 11% !important;
+            gap: clamp(10px, 2vh, 16px) !important;
+            padding: 0 clamp(6%, 11vw, 11%) !important;
           }
           .rf-buttons button {
             width: 100% !important;
-            padding: 19px 0 !important;
+            padding: clamp(14px, 2.4vh, 19px) 0 !important;
+            min-height: 44px !important;
             border-radius: 999px !important;
-            font-size: 16px !important;
+            font-size: clamp(14px, 4.2vw, 16px) !important;
             opacity: 1 !important;
             white-space: nowrap;
+          }
+
+          /* Logo scales too, and clears the notch. */
+          .rf-logo {
+            top: calc(clamp(14px, 2.6vh, 22px) + env(safe-area-inset-top)) !important;
+            left: clamp(14px, 4.5vw, 22px) !important;
+            width: clamp(24px, 7vw, 30px) !important;
           }
         }
       `}</style>
@@ -218,31 +230,23 @@ function ReflectionScreen({
           padding: "0 24px",
           gap: 0,
         }}>
-          <h1 className="rf-eyebrow" style={{
-            fontFamily: "var(--font-body)",
-            fontSize: "clamp(1.2rem, 4vw, 3.2rem)",
-            color: "#FFC99D",
-            opacity: 0.6,
-            margin: "0 0 8px",
-            textAlign: "center",
-            fontWeight: 400,
-            lineHeight: 1.2,
-          }}>
-            Every perception tells a different story.
-          </h1>
-
-          <p className="rf-headline" style={{
+          {/* The headline is now the first element — the "Every perception
+              tells a different story." eyebrow was removed. */}
+          <h1 className="rf-headline" style={{
             fontFamily: "'Amiri', serif",
-            fontSize: "clamp(1.92rem, 3.84vw, 3.12rem)",
+            // Scales with the viewport between a 320px phone and a tablet.
+            fontSize: "clamp(1.6rem, 5.2vw, 3.12rem)",
             color: "white",
             textAlign: "center",
             lineHeight: 1.35,
             fontWeight: 400,
-            margin: "0 0 56px",
+            margin: "0 0 clamp(24px, 6vh, 56px)",
             maxWidth: 820,
+            textWrap: "balance",
+            overflowWrap: "break-word",
           }}>
             What you experienced was only one possible interpretation of the world.
-          </p>
+          </h1>
 
           <p className="rf-subq" style={{
             fontSize: "clamp(0.75rem, 1.2vw, 0.95rem)",
@@ -267,8 +271,10 @@ function ReflectionScreen({
                 color: "#1a0f00",
                 border: "none",
                 borderRadius: 12,
-                padding: "16px 52px",
-                fontSize: 14,
+                padding: "16px clamp(28px, 9vw, 52px)",
+                minHeight: 44,
+                maxWidth: "100%",
+                fontSize: "clamp(13px, 3.6vw, 14px)",
                 letterSpacing: "0.06em",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -289,8 +295,10 @@ function ReflectionScreen({
                 color: "white",
                 border: "1.5px solid rgba(255,255,255,0.5)",
                 borderRadius: 50,
-                padding: "16px 52px",
-                fontSize: 14,
+                padding: "16px clamp(28px, 9vw, 52px)",
+                minHeight: 44,
+                maxWidth: "100%",
+                fontSize: "clamp(13px, 3.6vw, 14px)",
                 letterSpacing: "0.06em",
                 fontWeight: 400,
                 cursor: "pointer",
