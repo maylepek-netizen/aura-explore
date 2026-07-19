@@ -23,13 +23,16 @@ export default async function ExplorePage() {
       <ExploreFooter />
 
       {/* min-h-[100dvh] not min-h-screen: 100vh ignores mobile browser chrome
-          and pushes content off-screen. Top padding is clamped so a short phone
-          doesn't spend 14% of its height on empty space, and the bottom padding
-          clears the home indicator. px-4 on 320px screens buys back 16px. */}
+          and pushes content off-screen. justify-center centres the whole block
+          (heading + subtitle + list) vertically instead of pinning it to a
+          fixed top offset, so it sits lower and stays balanced on any screen
+          height. The top padding is now only a floor that clears the fixed
+          "Back to Start" button when the content is tall. px-4 on 320px
+          screens buys back 16px. */}
       <div
-        className="mx-auto flex min-h-[100dvh] w-full max-w-4xl flex-col items-center px-4 min-[360px]:px-6"
+        className="mx-auto flex min-h-[100dvh] w-full max-w-4xl flex-col items-center justify-center px-4 min-[360px]:px-6"
         style={{
-          paddingTop: "clamp(48px, 14dvh, 140px)",
+          paddingTop: "calc(72px + env(safe-area-inset-top))",
           paddingBottom: "calc(4rem + env(safe-area-inset-bottom))",
         }}
       >
